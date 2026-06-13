@@ -73,14 +73,15 @@ def compute_bkm_moments(
         return None
 
     # ── Step 4: Compute V, W, X integrals ──
-    # BKM define option-implied integrands using OTM option prices:
-    #   For OTM calls (K > S):  price = C(K)
-    #   For OTM puts  (K <= S): price = P(K)
-    #
-    # Integral contributions per contract per BKM eq. 5-7:
-    #   V_i = (2/T) * [1 - ln(K_i/S)] * (price_i / K_i^2) * dK
-    #   W_i = (6*ln(K_i/S) - 3*ln(K_i/S)^2) / T * (price_i / K_i^2) * dK
-    #   X_i = (12*ln(K_i/S)^2 - 4*ln(K_i/S)^3) / T * (price_i / K_i^2) * dK
+    # BKM (2003) span the variance/cubic/quartic contracts with OTM options.
+    # Using log_mk = ln(K/S) the call and put integrands unify (the put-side
+    # sign flips cancel), so a single expression covers both legs:
+    #   V_i = 2*[1 - ln(K_i/S)]              * (price_i / K_i^2) * dK   (eq. 5)
+    #   W_i = [6*ln(K_i/S) - 3*ln(K_i/S)^2]  * (price_i / K_i^2) * dK   (eq. 6)
+    #   X_i = [12*ln(K_i/S)^2 - 4*ln(K_i/S)^3] * (price_i / K_i^2) * dK (eq. 7)
+    # NB: integrands use the (already-discounted) traded option prices and carry
+    # NO 1/T and NO e^{rT}; the e^{rT} appears once, later, in the moment
+    # formulas (E*[R^k] = e^{rT} * contract_price).
 
     def _integrate(contracts):
         """Compute V, W, X contributions from a sorted list of OTM contracts."""
@@ -92,10 +93,9 @@ def compute_bkm_moments(
         prices = np.array([c.mid_price for c in contracts])
         log_mk = np.log(strikes / spot)  # ln(K/S)
 
-        # Compute integrands (multiply by erT to discount, per BKM convention)
-        v_integrand = erT * (2.0 / T) * (1.0 - log_mk) * prices / (strikes ** 2)
-        w_integrand = erT * (6.0 * log_mk - 3.0 * log_mk ** 2) / T * prices / (strikes ** 2)
-        x_integrand = erT * (12.0 * log_mk ** 2 - 4.0 * log_mk ** 3) / T * prices / (strikes ** 2)
+        v_integrand = 2.0 * (1.0 - log_mk) * prices / (strikes ** 2)
+        w_integrand = (6.0 * log_mk - 3.0 * log_mk ** 2) * prices / (strikes ** 2)
+        x_integrand = (12.0 * log_mk ** 2 - 4.0 * log_mk ** 3) * prices / (strikes ** 2)
 
         # Simpson's rule integration
         v_val = _simpsons(strikes, v_integrand)
@@ -131,7 +131,9 @@ def compute_bkm_moments(
     ) - 3.0
 
     # ── Step 6: Annualize ──
-    rn_volatility = np.sqrt(rn_variance * 252.0 / target_dte)
+    # rn_variance is the variance over the option horizon T (calendar years);
+    # annualized variance = rn_variance / T, so annualized vol = sqrt(var / T).
+    rn_volatility = np.sqrt(rn_variance / T)
 
     # Compute actual average DTE of contracts used
     all_contracts = otm_puts + otm_calls

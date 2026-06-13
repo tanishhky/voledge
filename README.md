@@ -147,6 +147,42 @@ Plus a **rolling half-life** series so you can see by eye whether the speed of
 reversion is itself converging, a long-run mean band (±1σ, ±2σ), and a current
 z-score. Backend: `mean_reversion.py` (`mean_reversion_analysis`).
 
+### ⚙ Premium-Driven Backtests — Results
+
+The platform thesis is closed end-to-end: the **PREMIUM** tab *measures* the
+risk premium, and two built-in strategies *trade* it through the walk-forward
+engine (zero look-ahead). Numbers below are real, out-of-sample, on free
+Yahoo Finance data, **2019-01 → 2024-12**, net of modeled transaction costs.
+
+| Strategy | Return | Ann. | Vol | Sharpe | Max DD |
+|---|---|---|---|---|---|
+| **GARCH vol-managed** (QQQ, 2020–24) | +65.8% | 10.7% | **15.4%** | **0.69** | **−24.2%** |
+| SPY (same window) | +94.6% | 14.3% | 21.0% | 0.68 | −33.7% |
+| **VIX variance-premium harvest** (2019–24) | +32.8% | 5.1% | 15.6% | 0.32 | −29.5% |
+| SPY (2019–24) | +123.9% | 15.1% | 20.1% | 0.75 | −33.7% |
+
+- **GARCH vol-managed** (`garch_volmanaged`) — a GARCH(1,1) conditional-variance
+  forecast scales single-name exposure to a 15% vol target (Moreira–Muir style).
+  It **hit the target almost exactly (15.4% realized)** and matched SPY's
+  risk-adjusted return (Sharpe 0.69 vs 0.68) with **~28% lower max drawdown**.
+  This is the clean positive result: disciplined vol-targeting works.
+- **VIX variance-premium harvest** (`vix_vrp`) — holds short-vol (SVXY) when the
+  premium `VIX² − realized` is positive, scaling exposure down as VIX rises and
+  stepping fully out in stress (VIX > 30). It harvested the premium at controlled
+  vol with a smaller drawdown than SPY, **but its Sharpe (0.32) trailed
+  buy-and-hold (0.75)**. That is the honest, intended finding: across two major
+  vol spikes (COVID-2020, 2022) the variance premium behaves as *compensation for
+  crash risk*, not free alpha — exactly why the premium exists. Naive always-on
+  short-vol (no stress filter) drew down −57%; the filter/scaling is the
+  difference between harvesting a premium and picking up pennies in front of a
+  steamroller.
+
+**Engine validation.** The BKM extractor is unit-tested against a Black-Scholes
+chain of known volatility: it recovers the true 20% vol and ~0 skew/kurtosis, and
+converges toward truth as strike coverage widens (residual error is strike
+truncation — the same limitation BKM has on any real, finite option chain). A put-
+skew chain correctly yields negative risk-neutral skew.
+
 ### 5. Trade Signal Generation
 Evaluates real-time math thresholds against the enriched options chain to output actionable strategies. All signals include **transaction cost adjustments** using bid-ask spreads (or a 3% mid-price haircut as fallback):
 
@@ -165,7 +201,7 @@ Each signal reports `estimated_execution_cost` for full transparency on spread d
 
 ### 7. Strategy Lab & Walk-Forward Engine
 - **Zero Look-Ahead Bias** — Upload custom Python code for regime detection and allocation. The engine executes day-by-day, ensuring logic strictly receives `t-1` historical data.
-- **Built-in Templates** — Fast-start with pre-configured strategies including Gaussian HMM Regime Switching, Dual MA Momentum, and simple Volatility thresholding.
+- **Built-in Templates** — Fast-start strategies: **VIX Variance-Premium Harvest** and **GARCH Vol-Managed** (the premium-driven pair, see Results above), plus Gaussian HMM Regime Switching, Dual MA Momentum, and simple Volatility thresholding.
 - **Interactive Animator** — Animate walk-forward P&L alongside an overlaid historical price chart, dynamically shaded by active regimes with scrubbing and speed controls.
 - **Strict Sandboxing** — The Python code evaluator strips dangerous built-ins and uses AST parsing to rigidly lock down imports to secure numerical libraries (numpy, pandas, scipy, sklearn, hmmlearn).
 

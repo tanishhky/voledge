@@ -156,9 +156,12 @@ def analyze_series(
     t_stat = adf_tstat(values)
     hurst = hurst_exponent(values)
 
+    # Verdict corroborates Hurst with the OU half-life: don't call something
+    # mean-reverting if there is no finite, in-sample half-life (e.g. a trending
+    # price can score a borderline Hurst < 0.5 yet have no real reversion).
     if hurst is None:
         verdict = "unknown"
-    elif hurst < 0.45:
+    elif hurst < 0.45 and hl is not None and hl < n:
         verdict = "mean-reverting"
     elif hurst > 0.55:
         verdict = "trending"

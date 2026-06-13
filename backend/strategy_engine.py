@@ -1023,6 +1023,7 @@ import pandas as pd
 
 RV_WINDOW = 21          # trading days for realized vol
 VRP_BUFFER = 0.0        # require VRP above this (annualized variance units) to harvest
+VIX_CAP = 30.0          # step aside when implied vol is elevated (stress filter)
 
 def _vix_col(data):
     for c in ['^VIX', 'VIX']:
@@ -1051,8 +1052,12 @@ def detect_regime(data, config):
     iv = data[vc].iloc[-1] / 100.0                                          # implied vol
     if np.isnan(rv) or np.isnan(iv):
         return 1
+    vix_level = data[vc].iloc[-1]
     vrp = iv ** 2 - rv ** 2  # variance risk premium (annualized variance units)
-    return 0 if vrp > VRP_BUFFER else 1
+    # Harvest only when the premium is positive AND vol is not in a stress spike.
+    # The VIX cap is the difference between "harvesting the premium" and "always
+    # short vol" — naive always-on short-vol gets destroyed in spikes.
+    return 0 if (vrp > VRP_BUFFER and vix_level < VIX_CAP) else 1
 
 def get_allocations(regime, data, tickers, config):
     # ^VIX is a signal-only column — never give it weight.
@@ -1060,10 +1065,21 @@ def get_allocations(regime, data, tickers, config):
     out = {t: 0.0 for t in tickers}
     if not avail:
         return out
+    vc = _vix_col(data)
+    vix = float(data[vc].iloc[-1]) if vc is not None else VIX_CAP
     if regime == 0:
-        # Harvest: hold the short-vol sleeve.
-        target = 'SVXY' if 'SVXY' in avail else avail[0]
-        out[target] = 1.0
+        # Harvest, but scale short-vol exposure DOWN linearly as VIX rises
+        # (full at VIX~0, flat at VIX_CAP). De-risking before the spike is what
+        # keeps drawdowns survivable; the rest sits in the risk-off sleeve.
+        w = float(np.clip(1.0 - vix / VIX_CAP, 0.0, 1.0))
+        if 'SVXY' in avail:
+            out['SVXY'] = w
+            if 'TLT' in avail:
+                out['TLT'] = 1.0 - w
+            elif w < 1.0 and len(avail) > 1:
+                out[avail[-1]] = 1.0 - w
+        else:
+            out[avail[0]] = 1.0
     else:
         # Step out: risk-off sleeve.
         if 'TLT' in avail:
@@ -1147,10 +1163,11 @@ def get_allocations(regime, data, tickers, config):
 STRATEGY_TEMPLATES = {
     'vix_vrp': {
         'name': 'Variance Risk Premium Harvest (VIX)',
-        'description': 'The platform headline strategy. Implied variance (VIX) vs '
-                       'realized variance (SPY) = the variance risk premium. Holds '
-                       'short-vol (SVXY) when the premium is rich, steps out to TLT '
-                       'when it goes thin/negative. Index-level Q - P, backtestable.',
+        'description': 'Variance-risk-premium harvest. Implied variance (VIX) vs '
+                       'realized variance (SPY) = the premium. Holds short-vol (SVXY) '
+                       'when the premium is positive, scaling exposure down as VIX '
+                       'rises and stepping fully out to TLT in stress (VIX>30). '
+                       'Index-level, backtestable embodiment of the Q - P thesis.',
         'code': VIX_VRP_TEMPLATE_CODE,
         'default_tickers': ['SVXY', 'TLT', '^VIX'],
         'default_config': {'rebalance_days': 5, 'min_training_days': 63, 'window_type': 'expanding'},
