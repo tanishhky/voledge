@@ -30,6 +30,9 @@ export default function App() {
   const [candles, setCandles] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [volData, setVolData] = useState(null)
+  // Vol/options analysis has its own loading flag so it never blanks the
+  // equity (underlying) views while the option chain fetches.
+  const [volLoading, setVolLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('price')
   // Sub-views for consolidated tabs
   const [subView, setSubView] = useState({ price: 'charts', tearsheet: 'tearsheet', optimize: 'sensitivity' })
@@ -118,7 +121,7 @@ export default function App() {
     if (!candles || !analysis) {
       return setErr('Run Fetch & Analyze first to load underlying data.')
     }
-    setLoading(true)
+    setVolLoading(true)
     setVolData(null)
     try {
       // Use the ticker from the actual fetched data, not the Controls input
@@ -150,17 +153,15 @@ export default function App() {
       const nSignals = result.trade_signals?.length || 0
       const nContracts = result.volatility_analysis?.chain?.length || 0
       setOk(`Vol analysis complete — ${nContracts} contracts, ${nSignals} signals`)
-      setActiveTab('surface')
     } catch (err) { setErr(err?.message || String(err)) }
-    finally { setLoading(false) }
+    finally { setVolLoading(false) }
   }
 
   const handleReprocess = async (reprocessParams) => {
     if (!candles || !analysis || !cachedContracts || !cachedBars) {
       return setErr('No cached data available. Run Vol Analysis first.')
     }
-    setLoading(true)
-    setVolData(null)
+    setVolLoading(true)
     try {
       setInfo('Reprocessing with updated parameters (no API calls)…')
       const spot = candles[candles.length - 1].close
@@ -183,9 +184,8 @@ export default function App() {
       const nSignals = result.trade_signals?.length || 0
       const nContracts = result.volatility_analysis?.chain?.length || 0
       setOk(`Reprocessed — ${nContracts} contracts, ${nSignals} signals (no API calls)`)
-      setActiveTab('surface')
     } catch (err) { setErr(err?.message || String(err)) }
-    finally { setLoading(false) }
+    finally { setVolLoading(false) }
   }
 
   const handleDownloadCache = () => {
@@ -336,6 +336,28 @@ export default function App() {
     document.addEventListener('mouseup', onUp)
   }, [])
 
+  // Options-tab content gate: show the panel if loaded, a scoped spinner while
+  // the chain fetches (equity views stay live), else the call-to-action.
+  const renderOptions = (panel, title, sub) => {
+    if (volData) return panel
+    if (volLoading) {
+      return (
+        <div style={S.placeholder}>
+          <div className="ve-spinner" style={{ marginBottom: 16 }} />
+          <div style={S.placeholderTitle}>{status?.message || 'Computing options analytics…'}</div>
+          <div style={S.placeholderSub}>Underlying (equity) views stay live — only the option chain is loading.</div>
+        </div>
+      )
+    }
+    return (
+      <div style={S.placeholder}>
+        <div style={S.placeholderIcon}>◈</div>
+        <div style={S.placeholderTitle}>{title}</div>
+        <div style={S.placeholderSub}>{sub}</div>
+      </div>
+    )
+  }
+
   return (
     <div style={S.root}>
       <Controls
@@ -403,6 +425,15 @@ export default function App() {
               settings={settings} onUpdate={updateSettings} onReset={resetSettings} />
           </div>
         </div>
+
+        {/* Options-loading banner — non-blocking; equity views stay interactive */}
+        {volLoading && (
+          <div style={S.volBanner}>
+            <span className="ve-spinner ve-spinner-sm" style={{ marginRight: 10 }} />
+            <span>{status?.message || 'Loading option chain…'}</span>
+            <span style={{ color: '#6b7280', marginLeft: 8 }}>· underlying (equity) views stay available</span>
+          </div>
+        )}
 
         {/* Content */}
         <div style={S.content}>
@@ -473,44 +504,28 @@ export default function App() {
                 </>
               )}
 
-              {activeTab === 'surface' && (
-                volData
-                  ? <VolatilityPanel volData={volData} />
-                  : <div style={S.placeholder}>
-                    <div style={S.placeholderIcon}>◈</div>
-                    <div style={S.placeholderTitle}>Run Vol Analysis</div>
-                    <div style={S.placeholderSub}>Click "◈ Run Vol Analysis" in the sidebar to compute IV surface, greeks, and trade signals</div>
-                  </div>
+              {activeTab === 'surface' && renderOptions(
+                <VolatilityPanel volData={volData} />,
+                'Options view — run Vol Analysis',
+                'Computes the IV surface, greeks, and term structure from the option chain. Click "Run Vol Analysis" in the sidebar.'
               )}
 
-              {activeTab === 'bkm' && (
-                volData
-                  ? <BKMPanel volData={volData} analysis={analysis} />
-                  : <div style={S.placeholder}>
-                    <div style={S.placeholderIcon}></div>
-                    <div style={S.placeholderTitle}>Run Vol Analysis</div>
-                    <div style={S.placeholderSub}>BKM model-free risk-neutral moments require option chain data</div>
-                  </div>
+              {activeTab === 'bkm' && renderOptions(
+                <BKMPanel volData={volData} analysis={analysis} />,
+                'Options view — run Vol Analysis',
+                'BKM model-free risk-neutral moments require the option chain.'
               )}
 
-              {activeTab === 'premium' && (
-                volData
-                  ? <PremiumPanel volData={volData} />
-                  : <div style={S.placeholder}>
-                    <div style={S.placeholderIcon}>Δ</div>
-                    <div style={S.placeholderTitle}>Run Vol Analysis</div>
-                    <div style={S.placeholderSub}>The risk premium (Q − P) pairs BKM risk-neutral moments with horizon-matched realized moments — needs the option chain</div>
-                  </div>
+              {activeTab === 'premium' && renderOptions(
+                <PremiumPanel volData={volData} />,
+                'Options view — run Vol Analysis',
+                'The risk premium (Q − P) pairs BKM risk-neutral moments with horizon-matched realized moments — needs the option chain.'
               )}
 
-              {activeTab === 'signals' && (
-                volData
-                  ? <SignalsPanel signals={volData.trade_signals} summaryText={volData.summary_text} />
-                  : <div style={S.placeholder}>
-                    <div style={S.placeholderIcon}></div>
-                    <div style={S.placeholderTitle}>No Signals Yet</div>
-                    <div style={S.placeholderSub}>Run volatility analysis to generate trade signals</div>
-                  </div>
+              {activeTab === 'signals' && renderOptions(
+                <SignalsPanel signals={volData?.trade_signals} summaryText={volData?.summary_text} />,
+                'Options view — run Vol Analysis',
+                'Trade signals are generated from the option chain analysis.'
               )}
 
               {activeTab === 'moments' && analysis.moment_evolution && (
@@ -651,6 +666,11 @@ const S = {
   tickerBadge: {
     fontSize: 10, fontFamily: MONO, color: '#9ca3af', fontWeight: 600,
     background: '#151820', padding: '2px 8px', borderRadius: 3, border: '1px solid #1e2230',
+  },
+  volBanner: {
+    display: 'flex', alignItems: 'center', padding: '6px 14px',
+    background: '#1a1205', borderBottom: '1px solid #ff8000',
+    color: '#ffb46b', fontFamily: MONO, fontSize: 11, flexShrink: 0,
   },
   content: { flex: 1, overflowY: 'auto' },
   placeholder: {
