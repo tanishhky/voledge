@@ -2,11 +2,11 @@ import Plot from 'react-plotly.js'
 
 const MONO = "'JetBrains Mono', monospace"
 const DM = "'DM Sans', sans-serif"
-const COLORS = ['#ef4444','#22c55e','#f59e0b','#a78bfa','#f97316','#14b8a6','#60a5fa','#ec4899','#84cc16','#06b6d4']
+const COLORS = ['#ef4444','#22c55e','#f59e0b','#ff8000','#f97316','#14b8a6','#ff9e40','#ec4899','#84cc16','#06b6d4']
 
 export default function GMMChart({ dist, gmm, label, distKey = 'd1', height = 350 }) {
   if (!dist || !gmm) return null
-  const base = distKey === 'd1' ? '#3b82f6' : '#f59e0b'
+  const base = distKey === 'd1' ? '#ff8000' : '#f59e0b'
 
   const traces = [
     { type: 'bar', x: dist.price_bins, y: dist.density, name: 'Histogram', marker: { color: base, opacity: 0.12 }, bargap: 0 },
@@ -34,7 +34,7 @@ export default function GMMChart({ dist, gmm, label, distKey = 'd1', height = 35
   return (
     <Plot data={traces} layout={{
       title: { text: `${label} — GMM (n=${gmm.n_components})`, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-      paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12', font: { color: '#9ca3af', family: DM },
+      paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a', font: { color: '#9ca3af', family: DM },
       xaxis: { title: { text: 'Price', font: { color: '#4b5563', size: 10, family: MONO } }, gridcolor: '#1a1d25', linecolor: '#1a1d25', tickfont: { color: '#6b7280', size: 9, family: MONO } },
       yaxis: { title: { text: 'Density', font: { color: '#4b5563', size: 10, family: MONO } }, gridcolor: '#1a1d25', linecolor: '#1a1d25', tickfont: { color: '#6b7280', size: 9, family: MONO } },
       margin: { l: 55, r: 15, t: 35, b: 45 }, showlegend: true,

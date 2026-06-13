@@ -28,7 +28,7 @@ export default function ResultsPanel({ resultsText, analysisData }) {
       <div style={S.header}>
         <span style={S.title}>GMM RESULTS</span>
         <div style={S.btnGroup}>
-          <button onClick={handleCopy} style={S.btn}>{copied ? '✓ Copied' : '⎘ Copy'}</button>
+          <button onClick={handleCopy} style={S.btn}>{copied ? 'Copied' : '⎘ Copy'}</button>
           <button onClick={handleExportJSON} style={{ ...S.btn, borderColor: '#22c55e40', color: '#22c55e' }}>↓ JSON</button>
         </div>
       </div>
@@ -36,7 +36,7 @@ export default function ResultsPanel({ resultsText, analysisData }) {
 
       {analysisData?.gmm_d1?.components && (
         <div style={{ padding: '0 14px 14px' }}>
-          <MomentsTable title="D1 Components" components={analysisData.gmm_d1.components} accent="#3b82f6" />
+          <MomentsTable title="D1 Components" components={analysisData.gmm_d1.components} accent="#ff8000" />
           <MomentsTable title="D2 Components" components={analysisData.gmm_d2.components} accent="#f59e0b" />
         </div>
       )}
@@ -57,7 +57,7 @@ function MomentsTable({ title, components, accent }) {
           </tr></thead>
           <tbody>
             {components.map((c, i) => (
-              <tr key={i} style={{ background: i % 2 === 0 ? '#0d0e12' : 'transparent' }}>
+              <tr key={i} style={{ background: i % 2 === 0 ? '#0a0a0a' : 'transparent' }}>
                 <td style={S.td}>{c.component_index}</td>
                 <td style={S.td}>{c.weight.toFixed(4)}</td>
                 <td style={{ ...S.td, color: c.label === 'HVN' ? '#22c55e' : c.label === 'LVN' ? '#ef4444' : '#f59e0b', fontWeight: 600 }}>{c.label}</td>
@@ -65,7 +65,7 @@ function MomentsTable({ title, components, accent }) {
                 <td style={S.td}>{c.std_dev.toFixed(4)}</td>
                 <td style={S.td}>{c.variance.toFixed(4)}</td>
                 <td style={{ ...S.td, color: c.skewness > 0 ? '#22c55e' : c.skewness < 0 ? '#ef4444' : '#9ca3af' }}>{c.skewness.toFixed(4)}</td>
-                <td style={{ ...S.td, color: c.kurtosis > 0 ? '#f59e0b' : '#60a5fa' }}>{c.kurtosis.toFixed(4)}</td>
+                <td style={{ ...S.td, color: c.kurtosis > 0 ? '#f59e0b' : '#ff9e40' }}>{c.kurtosis.toFixed(4)}</td>
                 <td style={S.td}>[{c.range_1sigma[0].toFixed(1)}–{c.range_1sigma[1].toFixed(1)}]</td>
                 <td style={S.td}>[{c.range_2sigma[0].toFixed(1)}–{c.range_2sigma[1].toFixed(1)}]</td>
               </tr>
@@ -78,7 +78,7 @@ function MomentsTable({ title, components, accent }) {
 }
 
 const S = {
-  container: { background: '#0a0b0d' },
+  container: { background: '#000000' },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '10px 14px', borderBottom: '1px solid #1a1d25',

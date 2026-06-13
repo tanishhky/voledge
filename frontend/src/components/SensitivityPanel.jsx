@@ -11,7 +11,7 @@ const darkAxis = {
 }
 const darkLayout = (title) => ({
   title: { text: title, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-  paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+  paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
   font: { color: '#9ca3af', family: DM }, hovermode: 'closest',
 })
 const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false }
@@ -59,7 +59,7 @@ export default function SensitivityPanel({ strategyResult, sessionId, code }) {
   if (!sessionId) {
     return (
       <div style={S.empty}>
-        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}>🎛</div>
+        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}></div>
         <div style={{ fontSize: 16, color: '#6b7280', fontFamily: DM }}>Parameter Sensitivity</div>
         <div style={{ fontSize: 12, color: '#4b5563', marginTop: 6, fontFamily: MONO, textAlign: 'center', maxWidth: 380 }}>
           Run your manual strategy once to upload data, then use this tab to sweep across parameters.
@@ -84,7 +84,7 @@ export default function SensitivityPanel({ strategyResult, sessionId, code }) {
             <input value={range2} onChange={e => setRange2(e.target.value)} style={S.input} placeholder="e.g. 0.001,0.005" />
           </div>
         </div>
-        <button onClick={handleRun} disabled={loading} style={{ ...S.actionBtn, background: loading ? '#374151' : '#3b82f6', color: '#fff', borderColor: '#2563eb' }}>
+        <button onClick={handleRun} disabled={loading} style={{ ...S.actionBtn, background: loading ? '#374151' : '#ff8000', color: '#fff', borderColor: '#cc6a00' }}>
           {loading ? 'Running Grid...' : 'Run Sweep'}
         </button>
       </div>
@@ -97,7 +97,7 @@ export default function SensitivityPanel({ strategyResult, sessionId, code }) {
           
           {data.overfit_warning && (
             <div style={{ padding: '8px 12px', background: '#451a1a', color: '#fca5a5', fontSize: 11, fontFamily: MONO, borderBottom: '1px solid #7f1d1d' }}>
-              ⚠️ {data.overfit_warning}
+              {data.overfit_warning}
             </div>
           )}
 
@@ -142,7 +142,7 @@ function SensitivityHeatmap({ results, keys }) {
   return (
     <Plot data={[{
       type: 'heatmap', x: xVals, y: yVals, z: z,
-      colorscale: [[0, '#ef4444'], [0.5, '#0d0e12'], [1, '#22c55e']],
+      colorscale: [[0, '#ef4444'], [0.5, '#0a0a0a'], [1, '#22c55e']],
       texttemplate: '%{z:.2f}', showscale: true,
       colorbar: { tickfont: { color: '#6b7280', size: 9 } }
     }]} layout={{
@@ -204,12 +204,12 @@ const S = {
   },
   actionBar: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '12px', background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    padding: '12px', background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   inputGroup: { display: 'flex', alignItems: 'center', gap: 6 },
   label: { fontSize: 10, color: '#6b7280', fontFamily: MONO, textTransform: 'uppercase' },
   input: {
-    background: '#0a0b0d', border: '1px solid #1e2230', color: '#e5e7eb',
+    background: '#000000', border: '1px solid #1e2230', color: '#e5e7eb',
     fontFamily: MONO, fontSize: 11, padding: '4px 8px', borderRadius: 4, width: 140
   },
   actionBtn: {
@@ -220,7 +220,7 @@ const S = {
   section: { borderBottom: '1px solid #1a1d25' },
   sectionHeader: {
     padding: '8px 12px', fontSize: 10, fontWeight: 600, color: '#6b7280',
-    fontFamily: MONO, letterSpacing: 1, background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    fontFamily: MONO, letterSpacing: 1, background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   table: { borderCollapse: 'collapse', width: '100%', fontSize: 11, fontFamily: MONO },
   th: {

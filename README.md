@@ -1,8 +1,23 @@
 # ◈ VolEdge — Volatility Trading & Strategy Platform
 
-A full-stack quantitative trading platform combining **GMM-based price distribution analysis**, **options volatility analysis** (locally computed via Black-Scholes), **BKM model-free risk-neutral moment extraction**, **automated trade signal generation**, and a complete **walk-forward strategy backtesting engine** with tearsheet analytics.
+**The thesis in one line:** the gap between what options *price* (the risk-neutral
+distribution, extracted model-free via BKM) and what the underlying *realizes*
+(the physical distribution, horizon-matched) **is the risk premium** — and that
+spread, `Q − P`, is a forward-looking signal you can size and trade.
 
-Built on Polygon.io (free tier compatible). All greeks, IV, and risk-neutral moments computed locally — no paid analytics APIs required.
+VolEdge is a full-stack platform built around that idea. It pairs:
+
+1. **The research engine** — model-free risk-neutral moments (BKM 2003) measured
+   against statistically-correct, horizon-matched realized moments, surfaced as
+   the variance / skew / kurtosis risk premium on the **PREMIUM** tab. Plus
+   mean-reversion diagnostics (OU half-life, Hurst, Dickey-Fuller, rolling
+   half-life) on the **REVERSION** tab.
+2. **The execution engine** — define a trading universe, write strategy code in a
+   sandboxed (AST-validated) DSL, and backtest it with walk-forward optimization,
+   Monte-Carlo tearsheets, and PDF reporting.
+
+Built on Polygon.io (free tier compatible). All greeks, IV, risk-neutral moments,
+and realized moments are computed locally — no paid analytics APIs required.
 
 ## Architecture
 
@@ -98,8 +113,39 @@ Check out the interactive backtesting and analysis features:
 ### 4. BKM Model-Free Risk-Neutral Moments
 - **Bakshi-Kapadia-Madan (2003) Engine** — Extracts variance, skewness, and kurtosis directly from OTM option prices via Simpson's-rule integration. No distributional assumption required.
 - **Dual Tenor Extraction** — Computes moments at both 30-day and 60-day horizons.
-- **RN vs Physical Comparison** — Dedicated BKM Panel shows side-by-side risk-neutral (BKM from options) vs physical (GMM from price history) moments with color-coded mispricing alerts.
+- **RN vs Physical Comparison** — The BKM Panel shows side-by-side risk-neutral (BKM from options) vs physical (GMM price-space) moments with color-coded mispricing alerts. For the *statistically correct, horizon-matched* comparison, see the **PREMIUM** tab below.
 - **Actionable Insights** — Flags when the market is pricing more downside than the physical distribution suggests (expensive puts), or when tail options are overpriced/underpriced.
+
+### ⭐ The Risk Premium (Q − P) — Headline
+The **PREMIUM** tab is the platform's central claim. It pairs the BKM
+risk-neutral moments with **horizon-matched physical return moments** (computed
+on overlapping `target_dte`-day log returns, so both distributions describe the
+*same* forecast horizon — unlike the BKM panel's price-space comparison) and
+reports the spread for each moment:
+
+- **Variance risk premium** = RN variance − realized variance. Persistently
+  positive ⇒ options price more variance than realizes (the short-vol carry).
+- **Skew risk premium** = RN skew − physical skew. More-negative RN skew ⇒ the
+  market is paying up for crash protection beyond what has historically realized.
+- **Kurtosis risk premium** = RN kurtosis − physical kurtosis (tail pricing).
+
+Each tenor (30d / 60d) ships with a plain-English **read** generated from the
+spreads (e.g. *"Options price 9.1 vol-pts more variance than realized — variance
+risk premium is rich; carry favors selling premium"*). Backend:
+`physical_moments.py` (`compute_physical_moments`, `compute_risk_premium`).
+
+### ↻ Mean-Reversion Diagnostics
+The **REVERSION** tab is a descriptive lens (not a signal generator) answering
+"does this metric mean-revert, and how fast?" for price, log-price, and a
+trailing realized-vol series. Three independent estimators corroborate each other:
+
+- **OU half-life** — from the AR(1) speed of reversion (`-ln 2 / ln φ`).
+- **Hurst exponent** — H < 0.5 mean-reverting, ≈ 0.5 random walk, > 0.5 trending.
+- **Dickey-Fuller t-stat** — evidence against a unit root.
+
+Plus a **rolling half-life** series so you can see by eye whether the speed of
+reversion is itself converging, a long-run mean band (±1σ, ±2σ), and a current
+z-score. Backend: `mean_reversion.py` (`mean_reversion_analysis`).
 
 ### 5. Trade Signal Generation
 Evaluates real-time math thresholds against the enriched options chain to output actionable strategies. All signals include **transaction cost adjustments** using bid-ask spreads (or a 3% mid-price haircut as fallback):
@@ -139,7 +185,7 @@ Each signal reports `estimated_execution_cost` for full transparency on spread d
 - **Run History** — All backtest executions are logged with configs, metrics, and duration for auditability.
 
 ### 11. Dynamic UI/UX
-- **Tab-Based Navigation** — 15 dedicated tabs: CHARTS, PROFILE, VOL, BKM, SIGNALS, DATA, MOMENTS, STRATEGY, LIBRARY, TEARSHEET, COMPARE, SENSITIVITY, WFO, ANIMATE, MERGE.
+- **Tab-Based Navigation** — 17 dedicated tabs: CHARTS, PROFILE, VOL, BKM, PREMIUM, SIGNALS, DATA, MOMENTS, REVERSION, STRATEGY, LIBRARY, TEARSHEET, COMPARE, SENSITIVITY, WFO, ANIMATE, MERGE.
 - **Collapsible Sidebar** — The Controls sidebar is draggable/resizable (200px–450px) and collapses into a micro-icon strip to maximize chart space.
 - **Configuration Hub** — A header gear icon ⚙ opens Settings for tweaking batch variables (requests vs delay), option expirations (near/far boundaries), and sliding window ratios.
 - **Theming** — Fully unified dark-mode styling with natively customized WebKit range sliders (`#3b82f6` accents). Font stack: JetBrains Mono for data, DM Sans for UI.
@@ -194,8 +240,9 @@ GET   /supported-intervals             → Valid timeframes
 
 POST  /fetch                           → Fetch OHLCV + auto-detects asset class
 POST  /analyze                         → GMM distribution + sliding moment evolution
-POST  /volatility                      → Full vol surface + BKM moments + signals pipeline
-POST  /volatility/reprocess            → Recalculates greeks + BKM + signals (no API hit)
+POST  /mean-reversion                  → OU half-life, Hurst, DF t-stat, rolling half-life
+POST  /volatility                      → Vol surface + BKM moments + physical moments + Q−P premium + signals
+POST  /volatility/reprocess            → Recalculates greeks + BKM + premium + signals (no API hit)
 
 POST  /strategy/validate               → Validates user-uploaded Python strategy code
 POST  /strategy/run                    → Executes a walk-forward strategy backtest

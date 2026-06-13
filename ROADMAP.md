@@ -107,11 +107,46 @@ timeline.**
 4. The infrastructure built under Roadmap A is exactly what Roadmap B
    would need later. Post-application escalation to B is cheap.
 
-## Pending decision
+## Decision taken (2026-06-13)
 
-The user has not yet committed to a direction. The next session should
-confirm which roadmap before starting the README rewrite or demo
-script. Default if no input: Roadmap A.
+**Committed to the hybrid A→B path.** The user rejected stopping at A
+("why stop at mediocrity… make the absolute best") and committed to
+building the sharp research finding directly into the platform rather
+than after the application window. The agreed framing splits VolEdge
+into two resume bullets that connect into one story:
+
+1. **Research bullet (landing/analysis page):** the risk premium `Q − P`.
+   The old GMM-on-time-at-price "HVN/LVN" framing (volume-profile
+   folklore, not quant-respected) is retired as the headline; the GMM
+   machinery is repurposed toward the physical distribution. The
+   thesis the platform now states: risk-neutral moments (BKM) vs
+   horizon-matched realized moments → the variance / skew / kurtosis
+   risk premium as a forward-looking signal.
+2. **Engineering bullet:** the universe + AST-sandboxed strategy DSL +
+   walk-forward + tearsheet backtest engine.
+
+### Shipped this session (2026-06-13)
+- `backend/physical_moments.py` — horizon-matched physical return
+  moments + `compute_risk_premium` (Q − P spread + plain-English read).
+  Fixes the apples-to-oranges comparison in the old BKM panel (which
+  compared price-space GMM moments to annualized return RN moments).
+- `backend/mean_reversion.py` + `POST /mean-reversion` — OU half-life,
+  Hurst, Dickey-Fuller t-stat, rolling half-life on price/log-price/
+  realized-vol. Cosmetic/diagnostic, explicitly not a signal generator.
+- Premium folded into `/volatility` + `/volatility/reprocess`
+  (`phys_30d/60d`, `premium_30d/60d` on `VolatilityAnalysis`).
+- Frontend: `PremiumPanel.jsx` (PREMIUM tab), `MeanReversionPanel.jsx`
+  (REVERSION tab), wired into `App.jsx` + `api.js`.
+- README reframed to lead with the thesis; PREMIUM + REVERSION documented.
+
+### Still open (next sessions)
+- **Roadmap B proper:** run ONE clean backtest of a premium-driven
+  strategy (e.g. sell variance when the 30d variance premium is rich)
+  under no-lookahead discipline → headline number for the paper/resume.
+- Polished 90-sec demo for Alex Shirokov (PREMIUM tab + one backtest
+  tearsheet vs SPY). Still overdue.
+- Turn `paper/paper_voledge.tex` into the technical note (now with a
+  real finding, not just engineering).
 
 ## Related context
 

@@ -18,11 +18,11 @@ export default function VolatilityPanel({ volData, height = 380 }) {
         <MetricCard label="VRP 20d" value={fmt_pct(va.vrp_20d)}
           color={va.vrp_20d > 0.05 ? '#ef4444' : va.vrp_20d > 0 ? '#22c55e' : '#6b7280'} />
         <MetricCard label="TERM" value={va.iv_term_structure?.toUpperCase() || 'N/A'}
-          color={va.iv_term_structure === 'backwardation' ? '#ef4444' : '#3b82f6'} />
+          color={va.iv_term_structure === 'backwardation' ? '#ef4444' : '#ff8000'} />
         <MetricCard label="25Δ SKEW" value={fmt_pct(va.put_call_skew_25d)}
           color={va.put_call_skew_25d > 0.03 ? '#ef4444' : '#22c55e'} />
-        <MetricCard label="GMM VOL" value={va.gmm_weighted_vol != null ? `$${va.gmm_weighted_vol.toFixed(2)}` : 'N/A'} color="#a78bfa" />
-        <MetricCard label="GMM KURT" value={va.gmm_weighted_kurtosis?.toFixed(2) || 'N/A'} color="#a78bfa" />
+        <MetricCard label="GMM VOL" value={va.gmm_weighted_vol != null ? `$${va.gmm_weighted_vol.toFixed(2)}` : 'N/A'} color="#ff8000" />
+        <MetricCard label="GMM KURT" value={va.gmm_weighted_kurtosis?.toFixed(2) || 'N/A'} color="#ff8000" />
       </div>
 
       {/* Charts Row */}
@@ -60,7 +60,7 @@ export default function VolatilityPanel({ volData, height = 380 }) {
         </div>
       ) : (
         <div style={{ padding: '12px 16px', fontSize: 11, fontFamily: MONO, color: '#6b7280', borderBottom: '1px solid #1a1d25' }}>
-          ⚠ IV Surface needs &gt;3 data points (got {va.surface_points?.length || 0}). Try increasing strike range or checking if contracts had valid bars.
+          IV Surface needs &gt;3 data points (got {va.surface_points?.length || 0}). Try increasing strike range or checking if contracts had valid bars.
         </div>
       )}
 
@@ -99,7 +99,7 @@ function IVSmileChart({ surface, spot, height }) {
     byExpiry[key].push(p)
   }
 
-  const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#a78bfa', '#ec4899', '#14b8a6', '#f97316']
+  const colors = ['#ff8000', '#22c55e', '#f59e0b', '#ef4444', '#ff8000', '#ec4899', '#14b8a6', '#f97316']
   const traces = Object.entries(byExpiry).map(([key, pts], i) => {
     pts.sort((a, b) => a.strike - b.strike)
     return {
@@ -160,10 +160,10 @@ function IVSurface3D({ surface, height }) {
   const expiries = [...new Set(surface.map(p => p.expiry_days))].sort((a, b) => a - b)
 
   const sceneLayout = {
-    xaxis: { title: 'Moneyness', color: '#9ca3af', gridcolor: '#1a1d25', backgroundcolor: '#0a0b0d' },
-    yaxis: { title: 'DTE', color: '#9ca3af', gridcolor: '#1a1d25', backgroundcolor: '#0a0b0d' },
-    zaxis: { title: 'IV %', color: '#9ca3af', gridcolor: '#1a1d25', backgroundcolor: '#0a0b0d' },
-    bgcolor: '#0a0b0d',
+    xaxis: { title: 'Moneyness', color: '#9ca3af', gridcolor: '#1a1d25', backgroundcolor: '#000000' },
+    yaxis: { title: 'DTE', color: '#9ca3af', gridcolor: '#1a1d25', backgroundcolor: '#000000' },
+    zaxis: { title: 'IV %', color: '#9ca3af', gridcolor: '#1a1d25', backgroundcolor: '#000000' },
+    bgcolor: '#000000',
     camera: { eye: { x: 1.6, y: -1.6, z: 0.8 } },
   }
 
@@ -180,7 +180,7 @@ function IVSurface3D({ surface, height }) {
         type: 'surface',
         x: strikes, y: expiries, z: zData,
         connectgaps: true,
-        colorscale: [[0, '#0a0b0d'], [0.25, '#1e3a5f'], [0.5, '#3b82f6'], [0.75, '#f59e0b'], [1, '#ef4444']],
+        colorscale: [[0, '#000000'], [0.25, '#1e3a5f'], [0.5, '#ff8000'], [0.75, '#f59e0b'], [1, '#ef4444']],
         showscale: true,
         colorbar: {
           title: { text: 'IV %', font: { color: '#9ca3af', size: 10, family: MONO } },
@@ -204,7 +204,7 @@ function IVSurface3D({ surface, height }) {
       y: surface.map(p => p.expiry_days),
       z: ivPct,
       marker: {
-        size: 4, color: ivPct, colorscale: [[0, '#1e3a5f'], [0.5, '#3b82f6'], [1, '#ef4444']],
+        size: 4, color: ivPct, colorscale: [[0, '#1e3a5f'], [0.5, '#ff8000'], [1, '#ef4444']],
         showscale: true,
         colorbar: {
           title: { text: 'IV %', font: { color: '#9ca3af', size: 10, family: MONO } },
@@ -234,7 +234,7 @@ function ChainTable({ chain, spot }) {
         <td style={S.td}>{c.contract.expiration_date}</td>
         <td style={S.td}>{c.days_to_expiry}d</td>
         <td style={{ ...S.td, color: '#f59e0b' }}>{c.mid_price?.toFixed(2) || '—'}</td>
-        <td style={{ ...S.td, color: '#60a5fa' }}>{c.implied_volatility ? (c.implied_volatility * 100).toFixed(1) + '%' : '—'}</td>
+        <td style={{ ...S.td, color: '#ff9e40' }}>{c.implied_volatility ? (c.implied_volatility * 100).toFixed(1) + '%' : '—'}</td>
         <td style={S.td}>{c.delta?.toFixed(3) || '—'}</td>
         <td style={S.td}>{c.gamma?.toFixed(4) || '—'}</td>
         <td style={S.td}>{c.theta?.toFixed(3) || '—'}</td>
@@ -278,7 +278,7 @@ const darkAxis = {
 }
 const darkLayout = (title) => ({
   title: { text: title, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-  paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+  paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
   font: { color: '#9ca3af', family: DM }, hovermode: 'closest',
 })
 const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false }
@@ -287,7 +287,7 @@ const S = {
   container: { display: 'flex', flexDirection: 'column', gap: 0 },
   metricsRow: {
     display: 'flex', flexWrap: 'wrap', gap: 1, padding: '8px 10px',
-    background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   metric: {
     flex: '1 1 auto', minWidth: 80, padding: '6px 10px',
@@ -301,7 +301,7 @@ const S = {
   tableContainer: { padding: '0 0 8px' },
   tableHeader: {
     padding: '8px 12px', fontSize: 10, fontWeight: 600, color: '#6b7280',
-    fontFamily: MONO, letterSpacing: 1, background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    fontFamily: MONO, letterSpacing: 1, background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   table: { borderCollapse: 'collapse', width: '100%', fontSize: 11, fontFamily: MONO },
   th: {

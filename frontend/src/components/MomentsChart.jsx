@@ -1,7 +1,7 @@
 import Plot from 'react-plotly.js'
 
 const MONO = "'JetBrains Mono', monospace"
-const COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#a78bfa', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16']
+const COLORS = ['#ff8000', '#ef4444', '#22c55e', '#f59e0b', '#ff8000', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16']
 
 function ChartCard({ title, timestamps, series, yLabel, height = 240 }) {
     if (!timestamps || timestamps.length === 0) return null
@@ -53,7 +53,7 @@ export default function MomentsChart({ momentEvolution, distLabel }) {
     if (!momentEvolution || !momentEvolution.timestamps?.length) {
         return (
             <div style={S.empty}>
-                <div style={{ fontSize: 20, color: '#1e2230', marginBottom: 8 }}>📈</div>
+                <div style={{ fontSize: 20, color: '#1e2230', marginBottom: 8 }}></div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>No moment evolution data</div>
                 <div style={{ fontSize: 10, color: '#4b5563', marginTop: 4 }}>Run analysis with enough candles to generate sliding window data</div>
             </div>

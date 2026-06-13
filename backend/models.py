@@ -180,6 +180,12 @@ class VolatilityAnalysis(BaseModel):
     # BKM risk-neutral moments (model-free, from OTM option prices)
     rn_bkm_30d: Optional[Dict[str, Any]] = None
     rn_bkm_60d: Optional[Dict[str, Any]] = None
+    # Physical (P-measure) realized moments at matched horizons
+    phys_30d: Optional[Dict[str, Any]] = None
+    phys_60d: Optional[Dict[str, Any]] = None
+    # Risk premium = risk-neutral (Q) - physical (P), the headline spread
+    premium_30d: Optional[Dict[str, Any]] = None
+    premium_60d: Optional[Dict[str, Any]] = None
 
 
 class TradeSignal(BaseModel):

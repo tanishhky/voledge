@@ -11,6 +11,7 @@ from models import (
     FetchRequest, FetchResponse, AnalyzeRequest, AnalyzeResponse,
     VolatilityRequest, VolatilityResponse, VolatilityAnalysis,
     OptionsChainRequest, OptionContractWithGreeks, ReprocessRequest,
+    Candle,
 )
 from polygon_client import (
     fetch_candles, fetch_candles_parallel,
@@ -27,6 +28,8 @@ from volatility_engine import (
     compute_put_call_skew, generate_signals, generate_vol_summary, _candles_per_day,
 )
 from bkm_engine import compute_bkm_moments
+from physical_moments import compute_physical_moments, compute_risk_premium
+from mean_reversion import mean_reversion_analysis
 
 from strategy_engine import (
     StrategyDefinition, StrategyRunner, StrategyConfig, RegimeDefinition,
@@ -189,6 +192,35 @@ async def analyze(req: AnalyzeRequest):
             d1=d1, d2=d2, gmm_d1=gmm_d1, gmm_d2=gmm_d2, results_text=results_text,
             moment_evolution=moment_evo,
         )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Mean-Reversion Analysis endpoint ──
+
+@app.post("/mean-reversion")
+async def mean_reversion(req: dict):
+    """
+    Mean-reversion diagnostics (OU half-life, ADF t-stat, Hurst, rolling
+    half-life) on price, log-price, and realized volatility. Visualization
+    layer — descriptive, not a signal generator.
+    """
+    try:
+        raw = req.get("candles", [])
+        if not raw or len(raw) < 30:
+            raise HTTPException(status_code=400, detail="Need at least 30 candles.")
+        candles = [Candle(**c) if not isinstance(c, Candle) else c for c in raw]
+        result = mean_reversion_analysis(
+            candles=candles,
+            timeframe=req.get("timeframe", "1day"),
+            asset_class=req.get("asset_class", "stocks"),
+            vol_window=int(req.get("vol_window", 20)),
+            rolling_window=int(req.get("rolling_window", 90)),
+            rolling_step=int(req.get("rolling_step", 5)),
+        )
+        return result
     except HTTPException:
         raise
     except Exception as e:
@@ -394,6 +426,12 @@ async def volatility_analysis(req: VolatilityRequest):
         vol_analysis.rn_bkm_30d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 30)
         vol_analysis.rn_bkm_60d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 60)
 
+        # Physical (P-measure) moments at matched horizons + risk-premium spread (Q - P)
+        vol_analysis.phys_30d = compute_physical_moments(req.candles, 30, req.timeframe, req.asset_class)
+        vol_analysis.phys_60d = compute_physical_moments(req.candles, 60, req.timeframe, req.asset_class)
+        vol_analysis.premium_30d = compute_risk_premium(vol_analysis.rn_bkm_30d, vol_analysis.phys_30d)
+        vol_analysis.premium_60d = compute_risk_premium(vol_analysis.rn_bkm_60d, vol_analysis.phys_60d)
+
         summary = generate_vol_summary(vol_analysis, signals)
 
         return VolatilityResponse(
@@ -522,6 +560,12 @@ async def reprocess_volatility(req: ReprocessRequest):
         # BKM model-free risk-neutral moments
         vol_analysis.rn_bkm_30d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 30)
         vol_analysis.rn_bkm_60d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 60)
+
+        # Physical (P-measure) moments at matched horizons + risk-premium spread (Q - P)
+        vol_analysis.phys_30d = compute_physical_moments(req.candles, 30, req.timeframe, req.asset_class)
+        vol_analysis.phys_60d = compute_physical_moments(req.candles, 60, req.timeframe, req.asset_class)
+        vol_analysis.premium_30d = compute_risk_premium(vol_analysis.rn_bkm_30d, vol_analysis.phys_30d)
+        vol_analysis.premium_60d = compute_risk_premium(vol_analysis.rn_bkm_60d, vol_analysis.phys_60d)
 
         summary = generate_vol_summary(vol_analysis, signals)
 

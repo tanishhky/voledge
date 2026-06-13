@@ -1,0 +1,19 @@
+/* VolEdge — Bloomberg-style base + loading spinner */
+
+@keyframes ve-spin { to { transform: rotate(360deg); } }
+
+.ve-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #1c1c1c;
+  border-top-color: #ff8000;
+  border-radius: 50%;
+  animation: ve-spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+.ve-spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}

@@ -1009,8 +1009,161 @@ def get_allocations(regime, data, tickers, config):
     return weights
 '''
 
+VIX_VRP_TEMPLATE_CODE = '''
+import numpy as np
+import pandas as pd
+
+# ── Variance Risk Premium harvest (index level) ──
+# Implied variance = (VIX/100)^2  (the market's risk-neutral vol, Q).
+# Realized variance = SPY return variance over RV_WINDOW (the physical, P).
+# When VRP = implied - realized is RICH (positive beyond a buffer), the variance
+# premium is being paid: harvest it by holding SVXY (a short-vol product). When
+# the premium is thin or negative (stress / backwardation), step out to TLT.
+# This is the backtestable, index-level embodiment of the platform's Q - P thesis.
+
+RV_WINDOW = 21          # trading days for realized vol
+VRP_BUFFER = 0.0        # require VRP above this (annualized variance units) to harvest
+
+def _vix_col(data):
+    for c in ['^VIX', 'VIX']:
+        if c in data.columns:
+            return c
+    return None
+
+def _index_col(data):
+    for c in ['SPY', '^GSPC', 'IVV', 'VOO']:
+        if c in data.columns:
+            return c
+    # fall back to any non-VIX column
+    for c in data.columns:
+        if c not in ('^VIX', 'VIX'):
+            return c
+    return data.columns[0]
+
+def detect_regime(data, config):
+    """0 = premium rich (harvest via short vol); 1 = thin/negative (step out)."""
+    vc = _vix_col(data)
+    ic = _index_col(data)
+    if vc is None:
+        return 1
+    idx = data[ic]
+    rv = idx.pct_change().rolling(RV_WINDOW).std().iloc[-1] * np.sqrt(252)  # realized vol
+    iv = data[vc].iloc[-1] / 100.0                                          # implied vol
+    if np.isnan(rv) or np.isnan(iv):
+        return 1
+    vrp = iv ** 2 - rv ** 2  # variance risk premium (annualized variance units)
+    return 0 if vrp > VRP_BUFFER else 1
+
+def get_allocations(regime, data, tickers, config):
+    # ^VIX is a signal-only column — never give it weight.
+    avail = [t for t in tickers if t in data.columns and t not in ('^VIX', 'VIX')]
+    out = {t: 0.0 for t in tickers}
+    if not avail:
+        return out
+    if regime == 0:
+        # Harvest: hold the short-vol sleeve.
+        target = 'SVXY' if 'SVXY' in avail else avail[0]
+        out[target] = 1.0
+    else:
+        # Step out: risk-off sleeve.
+        if 'TLT' in avail:
+            out['TLT'] = 1.0
+        else:
+            out[avail[-1]] = 1.0
+    return out
+'''
+
+GARCH_VOLMANAGED_TEMPLATE_CODE = '''
+import numpy as np
+import pandas as pd
+
+# ── GARCH(1,1) volatility-managed exposure (single name) ──
+# Generalizes the premium idea to assets with no listed VIX: a GARCH(1,1)
+# conditional-variance FORECAST stands in for the implied/expected variance.
+# Exposure is scaled to a constant TARGET_VOL (Moreira-Muir style); since the
+# variance risk premium compensates de-risking in high-vol states, scaling down
+# when forecast vol is high is the single-name analog of harvesting the premium.
+# NOTE: this is a forecast premium, NOT an option-implied one — weaker claim than
+# the VIX-VRP template, kept ticker-agnostic on free data.
+
+TARGET_VOL = 0.15       # annualized vol target for the risky sleeve
+GARCH_LOOKBACK = 500    # max daily returns fed to the fit
+
+def _garch_forecast_var(returns):
+    """One-step-ahead daily variance forecast via GARCH(1,1) MLE; EWMA fallback."""
+    r = np.asarray(returns.dropna().values, dtype=float)
+    if len(r) < 50:
+        return float(np.var(r)) if len(r) > 1 else 1e-6
+    r = r[-GARCH_LOOKBACK:]
+    r = r - r.mean()
+    var0 = float(np.var(r))
+    try:
+        from scipy.optimize import minimize
+        def nll(p):
+            omega, alpha, beta = p
+            if omega <= 0 or alpha < 0 or beta < 0 or alpha + beta >= 1:
+                return 1e10
+            s2 = var0
+            ll = 0.0
+            for t in range(1, len(r)):
+                s2 = omega + alpha * r[t - 1] ** 2 + beta * s2
+                ll += np.log(s2) + r[t] ** 2 / s2
+            return 0.5 * ll
+        res = minimize(nll, [var0 * 0.1, 0.08, 0.88], method='Nelder-Mead',
+                       options={'maxiter': 200, 'xatol': 1e-7, 'fatol': 1e-7})
+        omega, alpha, beta = res.x
+        if omega > 0 and alpha >= 0 and beta >= 0 and alpha + beta < 1:
+            s2 = var0
+            for t in range(1, len(r)):
+                s2 = omega + alpha * r[t - 1] ** 2 + beta * s2
+            return float(omega + alpha * r[-1] ** 2 + beta * s2)
+    except Exception:
+        pass
+    # EWMA / IGARCH fallback (lambda = 0.94)
+    s2 = var0
+    for x in r:
+        s2 = 0.94 * s2 + 0.06 * x * x
+    return float(s2)
+
+def detect_regime(data, config):
+    return 0  # single regime; all logic in get_allocations
+
+def get_allocations(regime, data, tickers, config):
+    avail = [t for t in tickers if t in data.columns]
+    if not avail:
+        return {}
+    asset = avail[0]
+    cash = 'BIL' if 'BIL' in avail else (avail[1] if len(avail) > 1 else None)
+    ret = data[asset].pct_change()
+    fvol = np.sqrt(_garch_forecast_var(ret) * 252.0)
+    w = float(np.clip(TARGET_VOL / max(fvol, 1e-6), 0.0, 1.0))
+    out = {asset: w}
+    if cash:
+        out[cash] = 1.0 - w
+    return out
+'''
+
 # Template registry
 STRATEGY_TEMPLATES = {
+    'vix_vrp': {
+        'name': 'Variance Risk Premium Harvest (VIX)',
+        'description': 'The platform headline strategy. Implied variance (VIX) vs '
+                       'realized variance (SPY) = the variance risk premium. Holds '
+                       'short-vol (SVXY) when the premium is rich, steps out to TLT '
+                       'when it goes thin/negative. Index-level Q - P, backtestable.',
+        'code': VIX_VRP_TEMPLATE_CODE,
+        'default_tickers': ['SVXY', 'TLT', '^VIX'],
+        'default_config': {'rebalance_days': 5, 'min_training_days': 63, 'window_type': 'expanding'},
+    },
+    'garch_volmanaged': {
+        'name': 'GARCH Vol-Managed (single name)',
+        'description': 'Generalizes the premium idea to any ticker: a GARCH(1,1) '
+                       'conditional-variance forecast scales exposure to a constant '
+                       'vol target (rest in BIL). Forecast premium, not option-implied.',
+        'code': GARCH_VOLMANAGED_TEMPLATE_CODE,
+        'default_tickers': ['QQQ', 'BIL'],
+        'default_config': {'rebalance_days': 21, 'min_training_days': 252, 'window_type': 'expanding'},
+    },
     'hmm_regime': {
         'name': 'HMM Regime Switching',
         'description': 'Gaussian Hidden Markov Model detects 4 market regimes. '

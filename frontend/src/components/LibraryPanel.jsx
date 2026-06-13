@@ -53,7 +53,7 @@ export default function LibraryPanel({ onSelectStrategy }) {
       
       {strategies.length === 0 ? (
         <div style={S.empty}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
+          <div style={{ fontSize: 32, marginBottom: 12 }}></div>
           No saved strategies found. Save one from the Strategy tab!
         </div>
       ) : (
@@ -102,7 +102,7 @@ const S = {
     display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16
   },
   card: {
-    background: '#0d0e12', border: '1px solid #1f2937', borderRadius: 8, padding: 16,
+    background: '#0a0a0a', border: '1px solid #1f2937', borderRadius: 8, padding: 16,
     display: 'flex', flexDirection: 'column',
   },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
@@ -111,12 +111,12 @@ const S = {
   cardDesc: { fontSize: 12, color: '#9ca3af', fontFamily: DM, marginBottom: 16, flex: 1, minHeight: 40 },
   tags: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 },
   tag: { 
-    background: '#111827', color: '#60a5fa', border: '1px solid #1e3a8a', 
+    background: '#111827', color: '#ff9e40', border: '1px solid #1e3a8a', 
     fontSize: 10, fontFamily: MONO, padding: '2px 6px', borderRadius: 4 
   },
   cardActions: { display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 12, borderTop: '1px solid #1a1d25' },
   btnLoad: {
-    flex: 1, background: '#1e3a8a', color: '#60a5fa', border: 'none',
+    flex: 1, background: '#1e3a8a', color: '#ff9e40', border: 'none',
     padding: '8px', borderRadius: 4, fontFamily: MONO, fontSize: 11, cursor: 'pointer', fontWeight: 600
   },
   btnDelete: {

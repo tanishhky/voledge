@@ -145,7 +145,7 @@ export default function MergePanel() {
                 onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
                 onDrop={e => { e.preventDefault(); e.stopPropagation(); handleAddFiles(e.dataTransfer.files) }}
             >
-                <div style={S.dropIcon}>📁</div>
+                <div style={S.dropIcon}></div>
                 <div style={S.dropText}>Click or drag cache files here</div>
                 <div style={S.dropHint}>.json files exported with ↓ Save</div>
             </div>
@@ -167,7 +167,7 @@ export default function MergePanel() {
                                 <span>{f.data.candles?.length || 0} candles</span>
                                 <span>{f.data.cached_contracts?.length || 0} contracts</span>
                             </div>
-                            <button onClick={() => handleRemoveFile(i)} style={S.removeBtn}>✕</button>
+                            <button onClick={() => handleRemoveFile(i)} style={S.removeBtn}></button>
                         </div>
                     ))}
                 </div>
@@ -234,14 +234,14 @@ export default function MergePanel() {
 const S = {
     container: { padding: '24px 32px', maxWidth: 700, margin: '0 auto' },
     header: { marginBottom: 24 },
-    headerIcon: { fontSize: 24, color: '#3b82f6', marginRight: 10 },
+    headerIcon: { fontSize: 24, color: '#ff8000', marginRight: 10 },
     headerTitle: { fontSize: 18, fontWeight: 600, color: '#e5e7eb', fontFamily: DM },
     headerSub: { display: 'block', fontSize: 12, color: '#6b7280', fontFamily: MONO, marginTop: 4 },
 
     dropZone: {
         border: '2px dashed #1e2230', borderRadius: 8, padding: '32px 24px',
         textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s',
-        background: '#0d0e12',
+        background: '#0a0a0a',
     },
     dropIcon: { fontSize: 28, marginBottom: 8 },
     dropText: { fontSize: 13, color: '#9ca3af', fontFamily: DM },
@@ -272,7 +272,7 @@ const S = {
 
     mergeBtn: {
         marginTop: 16, width: '100%', padding: '10px 0', border: 'none', borderRadius: 6,
-        background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)', color: '#fff',
+        background: 'linear-gradient(135deg, #7c3aed 0%, #ff8000 100%)', color: '#fff',
         fontSize: 13, fontWeight: 600, fontFamily: MONO, cursor: 'pointer',
         letterSpacing: 0.3,
     },

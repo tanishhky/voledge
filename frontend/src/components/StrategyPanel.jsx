@@ -43,7 +43,7 @@ function Section({ title, icon, defaultOpen = false, accent, children }) {
 function ModeToggle({ mode, onChange }) {
   return (
     <div style={{
-      display: 'flex', background: '#0a0b0d', borderRadius: 6, padding: 3,
+      display: 'flex', background: '#000000', borderRadius: 6, padding: 3,
       border: '1px solid #1e2230', gap: 2,
     }}>
       {['api', 'manual'].map(m => (
@@ -53,12 +53,12 @@ function ModeToggle({ mode, onChange }) {
           fontSize: 10, fontWeight: 700, letterSpacing: 1,
           transition: 'all 0.2s ease',
           background: mode === m
-            ? (m === 'api' ? 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)' : 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)')
+            ? (m === 'api' ? 'linear-gradient(135deg, #1d4ed8 0%, #ff8000 100%)' : 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)')
             : 'transparent',
           color: mode === m ? '#fff' : '#6b7280',
           boxShadow: mode === m ? '0 2px 8px rgba(59,130,246,0.25)' : 'none',
         }}>
-          {m === 'api' ? '◈ API MODE' : '⚙ MANUAL MODE'}
+          {m === 'api' ? '◈ API MODE' : 'MANUAL MODE'}
         </button>
       ))}
     </div>
@@ -131,10 +131,10 @@ function FileUploadZone({ uploadedFiles, uploadInfo, uploading, onUpload, onRemo
           border: `2px dashed ${dragOver ? '#7c3aed' : '#2a2d35'}`,
           borderRadius: 8, padding: '20px 12px', textAlign: 'center',
           cursor: 'pointer', transition: 'all 0.2s ease',
-          background: dragOver ? '#7c3aed11' : '#0a0b0d',
+          background: dragOver ? '#7c3aed11' : '#000000',
         }}
       >
-        <div style={{ fontSize: 24, marginBottom: 6, opacity: 0.5 }}>📂</div>
+        <div style={{ fontSize: 24, marginBottom: 6, opacity: 0.5 }}></div>
         <div style={{ fontSize: 11, fontFamily: MONO, color: '#6b7280' }}>
           {uploading ? '⟳ Uploading…' : 'Drop files here or click to browse'}
         </div>
@@ -155,7 +155,7 @@ function FileUploadZone({ uploadedFiles, uploadInfo, uploading, onUpload, onRemo
               border: '1px solid #1e2230',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                <span style={{ fontSize: 12 }}>📄</span>
+                <span style={{ fontSize: 12 }}></span>
                 <span style={{ fontSize: 10, fontFamily: MONO, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {f.name}
                 </span>
@@ -176,7 +176,7 @@ function FileUploadZone({ uploadedFiles, uploadInfo, uploading, onUpload, onRemo
           background: '#16a34a11', border: '1px solid #16a34a33',
         }}>
           <div style={{ fontSize: 10, fontFamily: MONO, color: '#4ade80', fontWeight: 600, marginBottom: 4 }}>
-            ✓ Data Parsed
+            Data Parsed
           </div>
           <div style={{ fontSize: 9, fontFamily: MONO, color: '#9ca3af', lineHeight: 1.6 }}>
             <div><strong>Columns:</strong> {uploadInfo.columns?.join(', ')}</div>
@@ -270,12 +270,12 @@ function CodeEditor({ code, onChange, readOnly = false }) {
   // Fallback: plain textarea
   const lines = (code || '').split('\n')
   return (
-    <div style={{ position: 'relative', background: '#0d0e12', borderRadius: 4, border: '1px solid #1e2230', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', background: '#0a0a0a', borderRadius: 4, border: '1px solid #1e2230', overflow: 'hidden' }}>
       <div style={{ display: 'flex' }}>
         <div style={{
           padding: '10px 8px', textAlign: 'right', color: '#4b5563', fontSize: 11,
           fontFamily: MONO, lineHeight: '18px', userSelect: 'none',
-          borderRight: '1px solid #1a1d25', minWidth: 36, background: '#0a0b0d',
+          borderRight: '1px solid #1a1d25', minWidth: 36, background: '#000000',
         }}>
           {lines.map((_, i) => <div key={i}>{i + 1}</div>)}
         </div>
@@ -304,13 +304,13 @@ function DebugConsole({ output, placement, onPlacementChange, onClear }) {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '6px 12px', background: '#0a0b0d', borderTop: '1px solid #1e2230',
+        padding: '6px 12px', background: '#000000', borderTop: '1px solid #1e2230',
         cursor: 'pointer',
       }} onClick={() => setExpanded(true)}>
         <span style={{ fontSize: 10, fontFamily: MONO, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12 }}>🖥</span> Console
+          <span style={{ fontSize: 12 }}></span> Console
           {output && <span style={{
-            background: '#7c3aed33', color: '#a78bfa', padding: '1px 5px',
+            background: '#7c3aed33', color: '#ff8000', padding: '1px 5px',
             borderRadius: 8, fontSize: 9,
           }}>{output.split('\n').filter(l => l.trim()).length} lines</span>}
         </span>
@@ -327,10 +327,10 @@ function DebugConsole({ output, placement, onPlacementChange, onClear }) {
       {/* Console header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '5px 12px', background: '#0a0b0d', borderBottom: '1px solid #1a1d25',
+        padding: '5px 12px', background: '#000000', borderBottom: '1px solid #1a1d25',
       }}>
         <span style={{ fontSize: 10, fontFamily: MONO, color: '#9ca3af', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12 }}>🖥</span> CONSOLE OUTPUT
+          <span style={{ fontSize: 12 }}></span> CONSOLE OUTPUT
         </span>
         <div style={{ display: 'flex', gap: 4 }}>
           {/* Placement buttons */}
@@ -339,16 +339,16 @@ function DebugConsole({ output, placement, onPlacementChange, onClear }) {
               background: placement === p ? '#7c3aed33' : 'transparent',
               border: `1px solid ${placement === p ? '#7c3aed55' : '#1e2230'}`,
               borderRadius: 3, padding: '2px 6px', fontSize: 9, fontFamily: MONO,
-              color: placement === p ? '#a78bfa' : '#4b5563', cursor: 'pointer',
+              color: placement === p ? '#ff8000' : '#4b5563', cursor: 'pointer',
             }}>
-              {p === 'bottom' ? '⬇' : p === 'left' ? '⬅' : '⬜'} {p}
+              {p === 'bottom' ? '' : p === 'left' ? '' : ''} {p}
             </button>
           ))}
           <button onClick={onClear} style={{
             background: 'transparent', border: '1px solid #1e2230', borderRadius: 3,
             padding: '2px 6px', fontSize: 9, fontFamily: MONO, color: '#4b5563',
             cursor: 'pointer',
-          }}>✕ Clear</button>
+          }}>Clear</button>
           <button onClick={() => setExpanded(false)} style={{
             background: 'transparent', border: '1px solid #1e2230', borderRadius: 3,
             padding: '2px 6px', fontSize: 9, fontFamily: MONO, color: '#4b5563',
@@ -417,7 +417,7 @@ function ResultsDisplay({ result }) {
 
       {/* Regime timeline */}
       {result.regime_history && result.regime_history.length > 0 && (
-        <Section title="REGIME TIMELINE" icon="◉" defaultOpen={true} accent="#a78bfa">
+        <Section title="REGIME TIMELINE" icon="◉" defaultOpen={true} accent="#ff8000">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
             {result.regime_history.map((r, i) => (
               <div key={i} style={{
@@ -440,7 +440,7 @@ function ResultsDisplay({ result }) {
 
       {/* Rebalance log */}
       {result.rebalance_log && result.rebalance_log.length > 0 && (
-        <Section title={`REBALANCE LOG (${result.rebalance_log.length})`} icon="↻" accent="#60a5fa">
+        <Section title={`REBALANCE LOG (${result.rebalance_log.length})`} icon="↻" accent="#ff9e40">
           <div style={{ maxHeight: 200, overflow: 'auto' }}>
             <table style={{ width: '100%', fontSize: 10, fontFamily: MONO, borderCollapse: 'collapse' }}>
               <thead>
@@ -452,7 +452,7 @@ function ResultsDisplay({ result }) {
               </thead>
               <tbody>
                 {result.rebalance_log.map((r, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #0d0e12' }}>
+                  <tr key={i} style={{ borderBottom: '1px solid #0a0a0a' }}>
                     <td style={{ padding: '3px 8px', color: '#9ca3af' }}>{r.date?.slice(0, 10)}</td>
                     <td style={{ padding: '3px 8px' }}>
                       <span style={{ color: REGIME_COLORS[r.regime] || '#9ca3af' }}>R{r.regime}</span>
@@ -478,18 +478,18 @@ function ApiDocsViewer({ docs }) {
       <div style={{ color: '#e5e7eb', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>{docs.title}</div>
       <p style={{ marginBottom: 12 }}>{docs.overview}</p>
 
-      <div style={{ color: '#60a5fa', fontWeight: 600, marginBottom: 4 }}>Required Functions</div>
+      <div style={{ color: '#ff9e40', fontWeight: 600, marginBottom: 4 }}>Required Functions</div>
       {Object.entries(docs.required_functions || {}).map(([name, info]) => (
-        <div key={name} style={{ background: '#0d0e12', borderRadius: 4, padding: 10, marginBottom: 8, border: '1px solid #1e2230' }}>
+        <div key={name} style={{ background: '#0a0a0a', borderRadius: 4, padding: 10, marginBottom: 8, border: '1px solid #1e2230' }}>
           <div style={{ color: '#4ade80', marginBottom: 4 }}>{info.signature}</div>
           <div style={{ color: '#9ca3af', marginBottom: 6 }}>{info.description}</div>
-          <pre style={{ background: '#0a0b0d', padding: 8, borderRadius: 3, color: '#fbbf24', overflow: 'auto', fontSize: 10 }}>
+          <pre style={{ background: '#000000', padding: 8, borderRadius: 3, color: '#fbbf24', overflow: 'auto', fontSize: 10 }}>
             {info.example}
           </pre>
         </div>
       ))}
 
-      <div style={{ color: '#60a5fa', fontWeight: 600, marginTop: 12, marginBottom: 4 }}>Allowed Imports</div>
+      <div style={{ color: '#ff9e40', fontWeight: 600, marginTop: 12, marginBottom: 4 }}>Allowed Imports</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         {(docs.allowed_imports || []).map((m, i) => (
           <span key={i} style={{ ...sty.tag, background: '#16a34a22', borderColor: '#16a34a55', color: '#4ade80' }}>{m}</span>
@@ -499,13 +499,13 @@ function ApiDocsViewer({ docs }) {
       <div style={{ color: '#f87171', fontWeight: 600, marginTop: 12, marginBottom: 4 }}>Forbidden</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {(docs.forbidden || []).map((f, i) => (
-          <span key={i} style={{ color: '#f87171', fontSize: 10 }}>✕ {f}</span>
+          <span key={i} style={{ color: '#f87171', fontSize: 10 }}>{f}</span>
         ))}
       </div>
 
       <div style={{
         marginTop: 16, padding: 10, background: '#1e3a5f33', borderRadius: 4,
-        border: '1px solid #3b82f644', color: '#93c5fd',
+        border: '1px solid #ff800044', color: '#ffcd99',
       }}>
         <strong>Zero Look-Ahead Guarantee:</strong> {docs.look_ahead_guarantee}
       </div>
@@ -520,7 +520,7 @@ function ManualDocsHint() {
       padding: '10px 12px', background: '#7c3aed11', borderRadius: 6,
       border: '1px solid #7c3aed33', marginTop: 8,
     }}>
-      <div style={{ fontSize: 11, fontFamily: MONO, color: '#a78bfa', fontWeight: 600, marginBottom: 6 }}>
+      <div style={{ fontSize: 11, fontFamily: MONO, color: '#ff8000', fontWeight: 600, marginBottom: 6 }}>
         Manual Mode — Function Signature
       </div>
       <pre style={{
@@ -704,7 +704,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
       }
 
       setStatusText("Completed!");
-      data.code = code; // 🔹 Inject code for Sensitivity & WFO panels
+      data.code = code; // Inject code for Sensitivity & WFO panels
       data.session_id = data.session_id || sessionId; // Ensure session_id is preserved
       setResult(data);
 
@@ -754,8 +754,8 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
       }
 
       setStatusText("Completed!");
-      data.code = manualCode; // 🔹 Inject code for Sensitivity & WFO panels
-      data.session_id = sessionId; // 🔹 Inject session ID for Manual mode runs
+      data.code = manualCode; // Inject code for Sensitivity & WFO panels
+      data.session_id = sessionId; // Inject session ID for Manual mode runs
       setResult(data);
 
       setTimeout(() => {
@@ -825,7 +825,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
       {/* ── LEFT: Config Panel ── */}
       <div style={{
         width: 340, flexShrink: 0, borderRight: '1px solid #1a1d25',
-        overflowY: 'auto', background: '#0d0e12',
+        overflowY: 'auto', background: '#0a0a0a',
         display: 'flex', flexDirection: 'column',
       }}>
         {/* Console Left placement overlay */}
@@ -860,7 +860,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
             {mode === 'api' ? (
               <>
                 {/* Templates */}
-                <Section title="TEMPLATES" icon="◫" defaultOpen={true} accent="#a78bfa">
+                <Section title="TEMPLATES" icon="◫" defaultOpen={true} accent="#ff8000">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {templates && Object.entries(templates).map(([tid, t]) => (
                       <button key={tid} onClick={() => applyTemplate(tid)} style={{
@@ -886,7 +886,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
             ) : (
               <>
                 {/* Manual: File Upload */}
-                <Section title="DATA FILES" icon="📂" defaultOpen={true} accent="#a855f7">
+                <Section title="DATA FILES" icon="" defaultOpen={true} accent="#a855f7">
                   <FileUploadZone
                     uploadedFiles={uploadedFiles}
                     uploadInfo={uploadInfo}
@@ -897,7 +897,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
                 </Section>
 
                 {/* Manual: Benchmark (optional) */}
-                <Section title="BENCHMARK (OPTIONAL)" icon="📊" accent="#a855f7">
+                <Section title="BENCHMARK (OPTIONAL)" icon="" accent="#a855f7">
                   <div style={sty.lbl}>Benchmark Ticker (fetched via API)</div>
                   <input
                     value={manualBenchmark}
@@ -913,12 +913,12 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
             )}
 
             {/* Config (shared) */}
-            <Section title="CONFIGURATION" icon="⚙">
+            <Section title="CONFIGURATION" icon="">
               <ConfigEditor config={config} onChange={setConfig} />
             </Section>
 
             {mode === 'api' && (
-              <Section title="DATE RANGE" icon="📅">
+              <Section title="DATE RANGE" icon="">
                 <div style={sty.lbl}>Start Date</div>
                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={sty.input} />
                 <div style={{ ...sty.lbl, marginTop: 6 }}>End Date (blank = today)</div>
@@ -932,7 +932,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
                 ...sty.btnFull, background: '#374151', color: '#e5e7eb', marginBottom: 6,
                 opacity: activeCode ? 1 : 0.4,
               }}>
-                ✓ Validate Code
+                Validate Code
               </button>
 
               {validation && (
@@ -942,9 +942,9 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
                   border: `1px solid ${validation.valid ? '#16a34a55' : '#dc262655'}`,
                   color: validation.valid ? '#4ade80' : '#f87171',
                 }}>
-                  {validation.valid ? '✓ Code is valid' : `✕ ${validation.error}`}
+                  {validation.valid ? 'Code is valid' : `${validation.error}`}
                   {validation.warnings?.map((w, i) => (
-                    <div key={i} style={{ color: '#fbbf24', marginTop: 4 }}>⚠ {w}</div>
+                    <div key={i} style={{ color: '#fbbf24', marginTop: 4 }}>{w}</div>
                   ))}
                 </div>
               )}
@@ -954,7 +954,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
                 background: running ? '#374151'
                   : mode === 'manual'
                     ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-                    : 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
+                    : 'linear-gradient(135deg, #7c3aed 0%, #ff8000 100%)',
                 color: '#fff',
                 opacity: (!activeCode || running || (mode === 'manual' && !sessionId)) ? 0.5 : 1,
               }}>
@@ -1000,10 +1000,10 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
                 }}
                 style={{ ...sty.btnSmall, background: '#1d4ed8', color: '#fff', cursor: 'pointer', fontSize: 10, padding: '3px 8px' }}
               >
-                💾 Save to Library
+                Save to Library
               </button>
               <label style={{ ...sty.btnSmall, background: '#374151', color: '#9ca3af', cursor: 'pointer', fontSize: 10, padding: '3px 8px' }}>
-                📁 Upload .py
+                Upload .py
                 <input type="file" accept=".py,.txt" onChange={handleFileUpload} style={{ display: 'none' }} />
               </label>
             </div>
@@ -1033,7 +1033,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
         {/* API Docs (API mode only) */}
         {mode === 'api' && (
           <div style={{ padding: 16 }}>
-            <Section title="API DOCUMENTATION" icon="📘" accent="#60a5fa">
+            <Section title="API DOCUMENTATION" icon="" accent="#ff9e40">
               <ApiDocsViewer docs={docs} />
             </Section>
           </div>
@@ -1056,7 +1056,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
             ) : (
               !result && mode === 'api' && (
                 <>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>⚗</div>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}></div>
                   <div style={{ fontSize: 14, fontFamily: DM, fontWeight: 500 }}>Strategy Lab</div>
                   <div style={{ fontSize: 11, fontFamily: MONO, color: '#374151', marginTop: 6, textAlign: 'center', maxWidth: 340 }}>
                     Select a template or upload your own Python regime code. Configure your basket, then execute with zero look-ahead bias.
@@ -1066,7 +1066,7 @@ export default function StrategyPanel({ onResult, loadedStrategy }) {
             )}
             {!running && mode === 'manual' && (
               <>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>⚙</div>
+                <div style={{ fontSize: 32, marginBottom: 12 }}></div>
                 <div style={{ fontSize: 14, fontFamily: DM, fontWeight: 500 }}>Manual Mode</div>
                 <div style={{ fontSize: 11, fontFamily: MONO, color: '#374151', marginTop: 6, textAlign: 'center', maxWidth: 360 }}>
                   Upload your own data files, write a run_strategy(data, config) function, and execute with full control over data and logic.
@@ -1105,8 +1105,8 @@ const sty = {
   },
   tag: {
     display: 'inline-flex', alignItems: 'center', gap: 4,
-    background: '#1e3a5f33', border: '1px solid #3b82f644', borderRadius: 3,
-    padding: '2px 8px', fontSize: 10, fontFamily: MONO, color: '#93c5fd',
+    background: '#1e3a5f33', border: '1px solid #ff800044', borderRadius: 3,
+    padding: '2px 8px', fontSize: 10, fontFamily: MONO, color: '#ffcd99',
   },
   tagX: {
     background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer',
@@ -1127,6 +1127,6 @@ const sty = {
     transition: 'all 0.15s', width: '100%',
   },
   templateBtnActive: {
-    background: '#1e3a5f33', borderColor: '#3b82f6',
+    background: '#1e3a5f33', borderColor: '#ff8000',
   },
 }

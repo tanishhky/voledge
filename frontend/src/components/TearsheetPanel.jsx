@@ -12,7 +12,7 @@ const darkAxis = {
 }
 const darkLayout = (title) => ({
   title: { text: title, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-  paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+  paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
   font: { color: '#9ca3af', family: DM }, hovermode: 'closest',
 })
 const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false }
@@ -71,7 +71,7 @@ export default function TearsheetPanel({ strategyResult }) {
   if (!strategyResult?.daily_log?.length) {
     return (
       <div style={S.empty}>
-        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}>📊</div>
+        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}></div>
         <div style={{ fontSize: 16, color: '#6b7280', fontFamily: DM }}>No Strategy Results</div>
         <div style={{ fontSize: 12, color: '#4b5563', marginTop: 6, fontFamily: MONO }}>
           Run a strategy first, then view the tearsheet here
@@ -83,7 +83,7 @@ export default function TearsheetPanel({ strategyResult }) {
   if (loading) {
     return (
       <div style={S.empty}>
-        <div style={{ fontSize: 14, color: '#3b82f6', fontFamily: MONO }}>Computing tearsheet...</div>
+        <div style={{ fontSize: 14, color: '#ff8000', fontFamily: MONO }}>Computing tearsheet...</div>
       </div>
     )
   }
@@ -101,10 +101,10 @@ export default function TearsheetPanel({ strategyResult }) {
         </span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={handleMonteCarlo} style={S.actionBtn} title="Monte Carlo Sim">
-            🎲 Monte Carlo
+            Monte Carlo
           </button>
           <button onClick={handleDownloadPdf} disabled={downloadingPdf} style={S.actionBtn}>
-            {downloadingPdf ? '⏳ Generating...' : '📄 Download PDF'}
+            {downloadingPdf ? 'Generating...' : 'Download PDF'}
           </button>
         </div>
       </div>
@@ -113,14 +113,14 @@ export default function TearsheetPanel({ strategyResult }) {
       <div style={S.ribbon}>
         <MetricCard label="CAGR" value={pct(ret.cagr)} color={ret.cagr > 0 ? '#22c55e' : '#ef4444'} />
         <MetricCard label="SHARPE" value={ret.sharpe?.toFixed(2)} color={ret.sharpe > 1 ? '#22c55e' : ret.sharpe > 0 ? '#f59e0b' : '#ef4444'} />
-        <MetricCard label="SORTINO" value={ret.sortino?.toFixed(2)} color="#a78bfa" />
+        <MetricCard label="SORTINO" value={ret.sortino?.toFixed(2)} color="#ff8000" />
         <MetricCard label="MAX DD" value={pct(risk.max_drawdown)} color="#ef4444" />
-        <MetricCard label="CALMAR" value={ret.calmar?.toFixed(2)} color="#3b82f6" />
+        <MetricCard label="CALMAR" value={ret.calmar?.toFixed(2)} color="#ff8000" />
         <MetricCard label="OMEGA" value={ret.omega?.toFixed(2)} color="#22c55e" />
         <MetricCard label="TOTAL" value={pct(ret.total_return)} color={ret.total_return > 0 ? '#22c55e' : '#ef4444'} />
         <MetricCard label="WIN %" value={pct(ret.win_rate)} color="#f59e0b" />
         {bench?.alpha != null && <MetricCard label="ALPHA" value={pct(bench.alpha)} color="#22c55e" />}
-        {bench?.beta != null && <MetricCard label="BETA" value={bench.beta?.toFixed(3)} color="#3b82f6" />}
+        {bench?.beta != null && <MetricCard label="BETA" value={bench.beta?.toFixed(3)} color="#ff8000" />}
       </div>
 
       {/* 2. Equity Curve */}
@@ -158,9 +158,9 @@ export default function TearsheetPanel({ strategyResult }) {
         <div style={S.section}>
           <div style={S.sectionHeader}>ROLLING METRICS (63-DAY)</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-            <RollingChart data={rolling} field="sharpe" title="Rolling Sharpe" color="#3b82f6" />
+            <RollingChart data={rolling} field="sharpe" title="Rolling Sharpe" color="#ff8000" />
             <RollingChart data={rolling} field="volatility" title="Rolling Volatility" color="#f59e0b" fmt={v => pct(v)} />
-            {rolling.beta && <RollingChart data={rolling} field="beta" title="Rolling Beta" color="#a78bfa" />}
+            {rolling.beta && <RollingChart data={rolling} field="beta" title="Rolling Beta" color="#ff8000" />}
             <RollingChart data={rolling} field="drawdown" title="Rolling Max DD" color="#ef4444" fmt={v => pct(v)} />
           </div>
         </div>
@@ -231,7 +231,7 @@ function MetricCard({ label, value, color = '#e5e7eb' }) {
 function EquityCurveChart({ eq, logScale }) {
   const traces = [
     { type: 'scatter', mode: 'lines', name: 'Strategy', x: eq.dates, y: eq.portfolio,
-      line: { color: '#3b82f6', width: 1.5 } },
+      line: { color: '#ff8000', width: 1.5 } },
   ]
   if (eq.benchmark) {
     traces.push({
@@ -299,7 +299,7 @@ function DistributionChart({ dist }) {
   return (
     <Plot data={[
       { type: 'bar', x: dist.histogram.centers, y: dist.histogram.counts,
-        marker: { color: '#3b82f6', opacity: 0.6 }, name: 'Returns', hovertemplate: 'Return: %{x:.3f}<br>Count: %{y}<extra></extra>' },
+        marker: { color: '#ff8000', opacity: 0.6 }, name: 'Returns', hovertemplate: 'Return: %{x:.3f}<br>Count: %{y}<extra></extra>' },
       { type: 'scatter', mode: 'lines', x: dist.fitted_normal.x, y: dist.fitted_normal.y,
         line: { color: '#f59e0b', width: 2, dash: 'dash' }, name: 'Normal Fit' },
     ]} layout={{
@@ -398,7 +398,7 @@ function MonteCarloSection({ mc }) {
       <div style={S.ribbon}>
         <MetricCard label="P(LOSS)" value={pct(mc.prob_loss)} color="#ef4444" />
         <MetricCard label="P(+20%)" value={pct(mc.prob_gain_20pct)} color="#22c55e" />
-        <MetricCard label="MEDIAN" value={`$${mc.terminal_wealth?.p50?.toLocaleString()}`} color="#3b82f6" />
+        <MetricCard label="MEDIAN" value={`$${mc.terminal_wealth?.p50?.toLocaleString()}`} color="#ff8000" />
         <MetricCard label="5TH %ILE" value={`$${mc.terminal_wealth?.p5?.toLocaleString()}`} color="#ef4444" />
         <MetricCard label="95TH %ILE" value={`$${mc.terminal_wealth?.p95?.toLocaleString()}`} color="#22c55e" />
         <MetricCard label="EXPECTED" value={`$${mc.expected_terminal?.toLocaleString()}`} color="#f59e0b" />
@@ -407,7 +407,7 @@ function MonteCarloSection({ mc }) {
         <Plot data={mc.fan_chart_paths.map((path, i) => ({
           type: 'scatter', mode: 'lines',
           y: path, x: Array.from({ length: path.length }, (_, j) => j),
-          line: { color: '#3b82f6', width: 0.3 },
+          line: { color: '#ff8000', width: 0.3 },
           opacity: 0.15, showlegend: false,
           hoverinfo: 'skip',
         }))} layout={{
@@ -437,7 +437,7 @@ const S = {
   },
   actionBar: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '6px 12px', background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    padding: '6px 12px', background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   actionBtn: {
     background: '#151820', border: '1px solid #1e2230', borderRadius: 4,
@@ -446,7 +446,7 @@ const S = {
   },
   ribbon: {
     display: 'flex', flexWrap: 'wrap', gap: 1, padding: '8px 10px',
-    background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   metric: {
     flex: '1 1 auto', minWidth: 80, padding: '6px 10px',
@@ -457,7 +457,7 @@ const S = {
   section: { borderBottom: '1px solid #1a1d25' },
   sectionHeader: {
     padding: '8px 12px', fontSize: 10, fontWeight: 600, color: '#6b7280',
-    fontFamily: MONO, letterSpacing: 1, background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    fontFamily: MONO, letterSpacing: 1, background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
   },
   toggle: { display: 'flex', alignItems: 'center', cursor: 'pointer' },

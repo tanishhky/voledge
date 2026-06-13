@@ -97,8 +97,8 @@ export default function Controls({
     <aside style={{ ...S.sidebar, width: sidebarWidth, minWidth: sidebarWidth }}>
       <style>{`
         input[type=range].custom-slider { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range].custom-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -4px; box-shadow: 0 0 0 2px #0f1014; transition: background 0.15s; }
-        input[type=range].custom-slider::-webkit-slider-thumb:hover { background: #60a5fa; }
+        input[type=range].custom-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #ff8000; cursor: pointer; margin-top: -4px; box-shadow: 0 0 0 2px #0f1014; transition: background 0.15s; }
+        input[type=range].custom-slider::-webkit-slider-thumb:hover { background: #ff9e40; }
         input[type=range].custom-slider::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #1e2230; border-radius: 2px; }
         input[type=range].custom-slider:focus { outline: none; }
       `}</style>
@@ -223,17 +223,17 @@ export default function Controls({
         <div style={{ marginTop: 12 }}>
           <button onClick={handleSubmit} disabled={loading}
             style={{ ...S.btn, ...S.btnPrimary, ...(loading ? S.btnDisabled : {}) }}>
-            {loading ? '⏳ Processing…' : '▶ Fetch & Analyze'}
+            {loading ? 'Processing…' : '▶ Fetch & Analyze'}
           </button>
           {hasCandles && (
             <button onClick={handleReAnalyze} disabled={loading}
               style={{ ...S.btn, ...S.btnReanalyze, ...(loading ? S.btnDisabled : {}), marginTop: 6 }}>
-              {loading ? '⏳ Processing…' : '⟳ Re-Analyze (GMM)'}
+              {loading ? 'Processing…' : '⟳ Re-Analyze (GMM)'}
             </button>
           )}
           <button onClick={handleVolatility} disabled={loading}
             style={{ ...S.btn, ...S.btnVol, ...(loading ? S.btnDisabled : {}), marginTop: 6 }}>
-            {loading ? '⏳ Processing…' : '◈ Run Vol Analysis'}
+            {loading ? 'Processing…' : '◈ Run Vol Analysis'}
           </button>
           {hasVolCache && (
             <button
@@ -245,7 +245,7 @@ export default function Controls({
               disabled={loading}
               style={{ ...S.btn, ...S.btnReprocess, ...(loading ? S.btnDisabled : {}), marginTop: 6 }}
             >
-              {loading ? '⏳ Processing…' : '⟳ Reprocess (cached)'}
+              {loading ? 'Processing…' : '⟳ Reprocess (cached)'}
             </button>
           )}
 
@@ -273,7 +273,7 @@ export default function Controls({
         </div>
 
         {status && (
-          <div style={{ ...S.statusBox, borderLeftColor: status.type === 'error' ? '#ef4444' : status.type === 'success' ? '#22c55e' : '#3b82f6' }}>
+          <div style={{ ...S.statusBox, borderLeftColor: status.type === 'error' ? '#ef4444' : status.type === 'success' ? '#22c55e' : '#ff8000' }}>
             <span style={{ fontSize: 11, color: status.type === 'error' ? '#fca5a5' : '#d1d5db', fontFamily: MONO }}>
               {status.message}
             </span>
@@ -316,7 +316,7 @@ const S = {
     padding: '14px 16px 10px', display: 'flex', alignItems: 'center', gap: 8,
     borderBottom: '1px solid #1a1d25',
   },
-  brandIcon: { color: '#3b82f6', fontSize: 18, fontWeight: 700 },
+  brandIcon: { color: '#ff8000', fontSize: 18, fontWeight: 700 },
   brandName: { color: '#e5e7eb', fontSize: 15, fontWeight: 700, letterSpacing: 0.5, fontFamily: MONO },
   version: { color: '#4b5563', fontSize: 10, fontFamily: MONO, marginLeft: 'auto', background: '#1a1d25', padding: '2px 6px', borderRadius: 3 },
   scrollArea: { flex: 1, overflowY: 'auto', padding: '8px 12px 16px' },
@@ -343,10 +343,10 @@ const S = {
     borderRadius: 4, color: '#e5e7eb', padding: '5px 8px', fontSize: 12,
     fontFamily: MONO, cursor: 'pointer',
   },
-  slider: { width: '100%', accentColor: '#3b82f6', cursor: 'pointer', height: 4 },
+  slider: { width: '100%', accentColor: '#ff8000', cursor: 'pointer', height: 4 },
   toggleRow: { display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0' },
   toggleDot: {
-    width: 10, height: 10, borderRadius: '50%', border: '1px solid #3b82f6',
+    width: 10, height: 10, borderRadius: '50%', border: '1px solid #ff8000',
     transition: 'background 0.15s',
   },
   tfGrid: {
@@ -358,9 +358,9 @@ const S = {
     fontFamily: MONO, textAlign: 'center',
     transition: 'all 0.12s',
   },
-  tfActive: { background: '#1e3a5f', border: '1px solid #3b82f6', color: '#60a5fa' },
+  tfActive: { background: '#1e3a5f', border: '1px solid #ff8000', color: '#ff9e40' },
   hint: { fontSize: 10, color: '#4b5563', marginTop: 3, fontFamily: MONO },
-  link: { fontSize: 10, color: '#3b82f6', textDecoration: 'none', display: 'block', marginTop: 4, fontFamily: MONO },
+  link: { fontSize: 10, color: '#ff8000', textDecoration: 'none', display: 'block', marginTop: 4, fontFamily: MONO },
   btn: {
     width: '100%', border: 'none', borderRadius: 4, padding: '8px 0',
     fontSize: 12, fontWeight: 600, cursor: 'pointer',
@@ -368,7 +368,7 @@ const S = {
     letterSpacing: 0.3,
   },
   btnPrimary: { background: '#1d4ed8', color: '#fff' },
-  btnVol: { background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)', color: '#fff' },
+  btnVol: { background: 'linear-gradient(135deg, #7c3aed 0%, #ff8000 100%)', color: '#fff' },
   btnReprocess: {
     background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff',
     border: '1px solid #34d399',
@@ -391,7 +391,7 @@ const S = {
   btnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
   statusBox: {
     marginTop: 10, padding: '8px 10px', background: '#111318',
-    borderRadius: 4, borderLeft: '3px solid #3b82f6',
+    borderRadius: 4, borderLeft: '3px solid #ff8000',
     wordBreak: 'break-word',
   },
 }

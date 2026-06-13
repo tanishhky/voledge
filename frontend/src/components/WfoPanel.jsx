@@ -11,7 +11,7 @@ const darkAxis = {
 }
 const darkLayout = (title) => ({
   title: { text: title, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-  paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+  paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
   font: { color: '#9ca3af', family: DM }, hovermode: 'closest',
 })
 const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false }
@@ -63,7 +63,7 @@ export default function WfoPanel({ strategyResult, sessionId, code }) {
   if (!sessionId) {
     return (
       <div style={S.empty}>
-        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}>🚶‍♂️</div>
+        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}></div>
         <div style={{ fontSize: 16, color: '#6b7280', fontFamily: DM }}>Walk-Forward Optimization</div>
         <div style={{ fontSize: 12, color: '#4b5563', marginTop: 6, fontFamily: MONO, textAlign: 'center', maxWidth: 380 }}>
           Run your manual strategy once to upload data, then use this tab to run out-of-sample forward walks.
@@ -97,7 +97,7 @@ export default function WfoPanel({ strategyResult, sessionId, code }) {
             <input value={range2} onChange={e => setRange2(e.target.value)} style={{...S.input, width: 100}} />
           </div>
         </div>
-        <button onClick={handleRun} disabled={loading} style={{ ...S.actionBtn, background: loading ? '#374151' : '#a78bfa', color: '#111827', borderColor: '#8b5cf6' }}>
+        <button onClick={handleRun} disabled={loading} style={{ ...S.actionBtn, background: loading ? '#374151' : '#ff8000', color: '#111827', borderColor: '#e67300' }}>
           {loading ? 'Walking Forward...' : 'Run WFO'}
         </button>
       </div>
@@ -108,9 +108,9 @@ export default function WfoPanel({ strategyResult, sessionId, code }) {
       {data && data.folds && (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           
-          <div style={{ display: 'flex', background: '#0d0e12', borderBottom: '1px solid #1a1d25' }}>
+          <div style={{ display: 'flex', background: '#0a0a0a', borderBottom: '1px solid #1a1d25' }}>
             <MetricCard label="OOS CAGR" value={pct(data.oos_metrics.cagr)} color={data.oos_metrics.cagr > 0 ? '#22c55e' : '#ef4444'} />
-            <MetricCard label="OOS SHARPE" value={data.oos_metrics.sharpe?.toFixed(2)} color="#3b82f6" />
+            <MetricCard label="OOS SHARPE" value={data.oos_metrics.sharpe?.toFixed(2)} color="#ff8000" />
             <MetricCard label="OOS MAX DD" value={pct(data.oos_metrics.max_drawdown)} color="#ef4444" />
           </div>
 
@@ -121,7 +121,7 @@ export default function WfoPanel({ strategyResult, sessionId, code }) {
               type: 'scatter', mode: 'lines', name: 'OOS Strategy',
               x: data.oos_daily_log.map(d => d.date),
               y: data.oos_daily_log.map(d => d.portfolio_value),
-              line: { color: '#a78bfa', width: 1.5 },
+              line: { color: '#ff8000', width: 1.5 },
             }]} layout={{
               ...darkLayout(''), margin: { l: 60, r: 15, t: 10, b: 40 },
               xaxis: { ...darkAxis }, yaxis: { ...darkAxis }
@@ -154,7 +154,7 @@ export default function WfoPanel({ strategyResult, sessionId, code }) {
                         <>
                           <td style={S.td}>{f.train_dates[0].split('T')[0]} → {f.train_dates[1].split('T')[0]}</td>
                           <td style={S.td}>{f.test_dates[0].split('T')[0]} → {f.test_dates[1].split('T')[0]}</td>
-                          <td style={{ ...S.td, color: '#a78bfa' }}>{JSON.stringify(f.best_params).replace(/["{}]/g, '')}</td>
+                          <td style={{ ...S.td, color: '#ff8000' }}>{JSON.stringify(f.best_params).replace(/["{}]/g, '')}</td>
                           <td style={S.td}>{f.in_sample_sharpe?.toFixed(2)}</td>
                           <td style={{ ...S.td, fontWeight: 600, color: f.out_of_sample_sharpe > 1 ? '#22c55e' : '#d1d5db' }}>{f.out_of_sample_sharpe?.toFixed(2)}</td>
                           <td style={S.td}>{pct(f.out_of_sample_return)}</td>
@@ -194,12 +194,12 @@ const S = {
   },
   actionBar: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '12px', background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    padding: '12px', background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   inputGroup: { display: 'flex', alignItems: 'center', gap: 6 },
   label: { fontSize: 9, color: '#6b7280', fontFamily: MONO, textTransform: 'uppercase' },
   input: {
-    background: '#0a0b0d', border: '1px solid #1e2230', color: '#e5e7eb',
+    background: '#000000', border: '1px solid #1e2230', color: '#e5e7eb',
     fontFamily: MONO, fontSize: 11, padding: '4px 8px', borderRadius: 4, width: 140
   },
   actionBtn: {
@@ -210,7 +210,7 @@ const S = {
   section: { borderBottom: '1px solid #1a1d25' },
   sectionHeader: {
     padding: '8px 12px', fontSize: 10, fontWeight: 600, color: '#6b7280',
-    fontFamily: MONO, letterSpacing: 1, background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    fontFamily: MONO, letterSpacing: 1, background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   table: { borderCollapse: 'collapse', width: '100%', fontSize: 11, fontFamily: MONO },
   th: {

@@ -19,6 +19,8 @@ import SensitivityPanel from './components/SensitivityPanel'
 import WfoPanel from './components/WfoPanel'
 import LibraryPanel from './components/LibraryPanel'
 import BKMPanel from './components/BKMPanel'
+import PremiumPanel from './components/PremiumPanel'
+import MeanReversionPanel from './components/MeanReversionPanel'
 
 const H = 340
 
@@ -288,16 +290,18 @@ export default function App() {
     { id: 'charts', label: 'CHARTS', icon: '▤' },
     { id: 'profile', label: 'PROFILE', icon: '▥' },
     { id: 'volatility', label: 'VOL', icon: '◈', accent: true },
-    { id: 'bkm', label: 'BKM', icon: '📐', accent: true },
-    { id: 'signals', label: 'SIGNALS', icon: '⚡', accent: true },
+    { id: 'bkm', label: 'BKM', icon: '', accent: true },
+    { id: 'premium', label: 'PREMIUM', icon: 'Δ', accent: true },
+    { id: 'signals', label: 'SIGNALS', icon: '', accent: true },
     { id: 'results', label: 'DATA', icon: '≡' },
-    { id: 'moments', label: 'MOMENTS', icon: '📈' },
-    { id: 'strategy', label: 'STRATEGY', icon: '⚗', accent: true },
-    { id: 'library', label: 'LIBRARY', icon: '📚' },
-    { id: 'tearsheet', label: 'TEARSHEET', icon: '📊', accent: true },
-    { id: 'compare', label: 'COMPARE', icon: '⚖' },
-    { id: 'sensitivity', label: 'SENSITIVITY', icon: '🎛', accent: true },
-    { id: 'wfo', label: 'WFO', icon: '🚶‍♂️', accent: true },
+    { id: 'moments', label: 'MOMENTS', icon: '' },
+    { id: 'reversion', label: 'REVERSION', icon: '↻', accent: true },
+    { id: 'strategy', label: 'STRATEGY', icon: '', accent: true },
+    { id: 'library', label: 'LIBRARY', icon: '' },
+    { id: 'tearsheet', label: 'TEARSHEET', icon: '', accent: true },
+    { id: 'compare', label: 'COMPARE', icon: '' },
+    { id: 'sensitivity', label: 'SENSITIVITY', icon: '', accent: true },
+    { id: 'wfo', label: 'WFO', icon: '', accent: true },
     { id: 'animate', label: 'ANIMATE', icon: '▶', accent: true },
     { id: 'merge', label: 'MERGE', icon: '⊕' },
   ]
@@ -352,7 +356,7 @@ export default function App() {
           }}>
           <div style={{
             position: 'absolute', top: 0, bottom: 0, left: 1, width: 2,
-            background: isDragging.current ? '#3b82f6' : '#1a1d25',
+            background: isDragging.current ? '#ff8000' : '#1a1d25',
             transition: 'background 0.15s'
           }} />
         </div>
@@ -371,15 +375,15 @@ export default function App() {
           </div>
           <div style={{ ...S.statusIndicator, position: 'relative' }}>
             {analysis && <span style={S.dot} title="GMM loaded" />}
-            {volData && <span style={{ ...S.dot, background: '#a78bfa' }} title="Vol loaded" />}
+            {volData && <span style={{ ...S.dot, background: '#ff8000' }} title="Vol loaded" />}
             <span style={S.tickerBadge}>{analysis?.ticker || '—'}</span>
             <button onClick={() => setSettingsOpen(p => !p)}
               style={{
-                background: 'none', border: 'none', color: settingsOpen ? '#3b82f6' : '#6b7280',
+                background: 'none', border: 'none', color: settingsOpen ? '#ff8000' : '#6b7280',
                 fontSize: 14, cursor: 'pointer', padding: '2px 6px', marginLeft: 4
               }}
               title="Settings"
-            >⚙</button>
+            ></button>
             <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)}
               settings={settings} onUpdate={updateSettings} onReset={resetSettings} />
           </div>
@@ -398,7 +402,7 @@ export default function App() {
 
           {loading && (
             <div style={S.placeholder}>
-              <div style={{ ...S.placeholderIcon, animation: 'none' }}>⟳</div>
+              <div className="ve-spinner" style={{ marginBottom: 16 }} />
               <div style={S.placeholderTitle}>{status?.message || 'Processing…'}</div>
             </div>
           )}
@@ -458,9 +462,19 @@ export default function App() {
                 volData
                   ? <BKMPanel volData={volData} analysis={analysis} />
                   : <div style={S.placeholder}>
-                    <div style={S.placeholderIcon}>📐</div>
+                    <div style={S.placeholderIcon}></div>
                     <div style={S.placeholderTitle}>Run Vol Analysis</div>
                     <div style={S.placeholderSub}>BKM model-free risk-neutral moments require option chain data</div>
+                  </div>
+              )}
+
+              {activeTab === 'premium' && (
+                volData
+                  ? <PremiumPanel volData={volData} />
+                  : <div style={S.placeholder}>
+                    <div style={S.placeholderIcon}>Δ</div>
+                    <div style={S.placeholderTitle}>Run Vol Analysis</div>
+                    <div style={S.placeholderSub}>The risk premium (Q − P) pairs BKM risk-neutral moments with horizon-matched realized moments — needs the option chain</div>
                   </div>
               )}
 
@@ -468,7 +482,7 @@ export default function App() {
                 volData
                   ? <SignalsPanel signals={volData.trade_signals} summaryText={volData.summary_text} />
                   : <div style={S.placeholder}>
-                    <div style={S.placeholderIcon}>⚡</div>
+                    <div style={S.placeholderIcon}></div>
                     <div style={S.placeholderTitle}>No Signals Yet</div>
                     <div style={S.placeholderSub}>Run volatility analysis to generate trade signals</div>
                   </div>
@@ -489,6 +503,15 @@ export default function App() {
                   </div>
                   <MomentsChart momentEvolution={analysis.moment_evolution} distLabel="d2" />
                 </div>
+              )}
+
+              {activeTab === 'reversion' && (
+                <MeanReversionPanel
+                  candles={candles}
+                  ticker={analysis.ticker}
+                  timeframe={lastParams?.fetchResult?.timeframe || '1day'}
+                  assetClass={lastParams?.fetchResult?.asset_class || 'stocks'}
+                />
               )}
             </>
           )}
@@ -546,7 +569,7 @@ const DM = "'DM Sans', sans-serif"
 
 const S = {
   root: {
-    display: 'flex', height: '100vh', background: '#0a0b0d',
+    display: 'flex', height: '100vh', background: '#000000',
     color: '#e5e7eb', fontFamily: DM, overflow: 'hidden',
   },
   main: {
@@ -554,7 +577,7 @@ const S = {
   },
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '0 12px', height: 38, background: '#0d0e12',
+    padding: '0 12px', height: 38, background: '#0a0a0a',
     borderBottom: '1px solid #1a1d25', flexShrink: 0,
   },
   tabs: { display: 'flex', gap: 2, height: '100%', alignItems: 'stretch' },
@@ -564,8 +587,8 @@ const S = {
     fontFamily: MONO, fontWeight: 600, letterSpacing: 0.8,
     display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.12s',
   },
-  tabActive: { color: '#e5e7eb', borderBottomColor: '#3b82f6' },
-  tabAccent: { borderBottomColor: '#a78bfa' },
+  tabActive: { color: '#e5e7eb', borderBottomColor: '#ff8000' },
+  tabAccent: { borderBottomColor: '#ff8000' },
   tabIcon: { fontSize: 12 },
   statusIndicator: { display: 'flex', alignItems: 'center', gap: 8 },
   dot: { width: 6, height: 6, borderRadius: '50%', background: '#22c55e' },

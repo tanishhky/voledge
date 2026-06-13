@@ -119,7 +119,7 @@ export default function EquityAnimator({ strategyResult }) {
     ctx.clearRect(0, 0, W, H)
 
     // Background
-    ctx.fillStyle = '#0a0b0d'
+    ctx.fillStyle = '#000000'
     ctx.fillRect(0, 0, W, H)
 
     const xScale = (i) => PAD_L + (i / Math.max(totalFrames - 1, 1)) * plotW
@@ -195,7 +195,7 @@ export default function EquityAnimator({ strategyResult }) {
     }
 
     // ── Strategy line ──
-    ctx.strokeStyle = '#3b82f6'
+    ctx.strokeStyle = '#ff8000'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(xScale(0), yScale(values[0]))
@@ -214,7 +214,7 @@ export default function EquityAnimator({ strategyResult }) {
       ctx.fillStyle = grad
       ctx.fillRect(cx - 12, cy - 12, 24, 24)
       // Dot
-      ctx.fillStyle = '#3b82f6'
+      ctx.fillStyle = '#ff8000'
       ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill()
     }
 
@@ -333,14 +333,14 @@ export default function EquityAnimator({ strategyResult }) {
           border: 'none', borderRadius: 4, padding: '6px 16px',
           fontFamily: MONO, fontWeight: 600, fontSize: 12, cursor: 'pointer',
         }}>
-          {playing ? '⏸ Pause' : frame >= totalFrames - 1 ? '⟳ Replay' : '▶ Play'}
+          {playing ? 'Pause' : frame >= totalFrames - 1 ? '⟳ Replay' : '▶ Play'}
         </button>
 
         {/* Scrubber */}
         <input
           type="range" min={0} max={Math.max(totalFrames - 1, 0)} value={frame}
           onChange={e => { setFrame(+e.target.value); setPlaying(false) }}
-          style={{ flex: 1, accentColor: '#3b82f6', cursor: 'pointer', height: 4 }}
+          style={{ flex: 1, accentColor: '#ff8000', cursor: 'pointer', height: 4 }}
         />
 
         {/* Speed */}
@@ -350,7 +350,7 @@ export default function EquityAnimator({ strategyResult }) {
             <button key={s} onClick={() => setSpeed(s)} style={{
               background: speed === s ? '#1d4ed8' : '#151820',
               color: speed === s ? '#fff' : '#6b7280',
-              border: `1px solid ${speed === s ? '#3b82f6' : '#1e2230'}`,
+              border: `1px solid ${speed === s ? '#ff8000' : '#1e2230'}`,
               borderRadius: 3, padding: '2px 6px', fontSize: 10,
               fontFamily: MONO, cursor: 'pointer',
             }}>
@@ -374,8 +374,8 @@ export default function EquityAnimator({ strategyResult }) {
         </div>
 
         {/* Jump buttons */}
-        <button onClick={() => { setFrame(0); setPlaying(false) }} style={ctrlBtn}>⏮</button>
-        <button onClick={() => { setFrame(totalFrames - 1); setPlaying(false) }} style={ctrlBtn}>⏭</button>
+        <button onClick={() => { setFrame(0); setPlaying(false) }} style={ctrlBtn}></button>
+        <button onClick={() => { setFrame(totalFrames - 1); setPlaying(false) }} style={ctrlBtn}></button>
       </div>
     </div>
   )

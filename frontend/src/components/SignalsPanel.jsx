@@ -4,12 +4,12 @@ const MONO = "'JetBrains Mono', monospace"
 const DM = "'DM Sans', sans-serif"
 
 const TYPE_ICONS = {
-  vol_crush: '🔥', skew_trade: '📐', calendar: '📅',
-  mean_reversion: '🎯', gamma_scalp: '⚡',
+  vol_crush: '', skew_trade: '', calendar: '',
+  mean_reversion: '', gamma_scalp: '',
 }
 const TYPE_COLORS = {
-  vol_crush: '#ef4444', skew_trade: '#f59e0b', calendar: '#3b82f6',
-  mean_reversion: '#22c55e', gamma_scalp: '#a78bfa',
+  vol_crush: '#ef4444', skew_trade: '#f59e0b', calendar: '#ff8000',
+  mean_reversion: '#22c55e', gamma_scalp: '#ff8000',
 }
 const CONVICTION_COLORS = { high: '#ef4444', medium: '#f59e0b', low: '#6b7280' }
 
@@ -57,7 +57,7 @@ export default function SignalsPanel({ signals, summaryText }) {
               <div style={S.quickMetrics}>
                 {s.max_profit != null && <QuickMetric label="Max Profit" value={`$${s.max_profit.toFixed(0)}`} color="#22c55e" />}
                 {s.max_loss != null && <QuickMetric label="Max Loss" value={`$${s.max_loss.toFixed(0)}`} color="#ef4444" />}
-                {s.probability_of_profit != null && <QuickMetric label="P(Profit)" value={`${(s.probability_of_profit * 100).toFixed(0)}%`} color="#60a5fa" />}
+                {s.probability_of_profit != null && <QuickMetric label="P(Profit)" value={`${(s.probability_of_profit * 100).toFixed(0)}%`} color="#ff9e40" />}
                 {s.risk_reward_ratio != null && <QuickMetric label="R/R Ratio" value={s.risk_reward_ratio.toFixed(2)} color="#f59e0b" />}
                 {s.net_delta != null && <QuickMetric label="Net Δ" value={s.net_delta.toFixed(3)} color="#d1d5db" />}
               </div>
@@ -107,7 +107,7 @@ export default function SignalsPanel({ signals, summaryText }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={S.summaryTitle}>RAW ANALYSIS OUTPUT</span>
             <button onClick={handleCopy} style={S.copyBtn}>
-              {copied ? '✓ Copied' : '⎘ Copy'}
+              {copied ? 'Copied' : '⎘ Copy'}
             </button>
           </div>
           <pre style={S.pre}>{summaryText}</pre>
@@ -135,7 +135,7 @@ const S = {
   signalsSection: { borderBottom: '1px solid #1a1d25' },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '10px 14px', background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    padding: '10px 14px', background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   headerTitle: { fontSize: 10, fontWeight: 700, color: '#6b7280', letterSpacing: 1.2, fontFamily: MONO },
   headerCount: { fontSize: 11, color: '#4b5563', fontFamily: MONO },
@@ -165,11 +165,11 @@ const S = {
     background: '#111318', borderRadius: 3, marginBottom: 3, fontSize: 11, fontFamily: MONO,
   },
   legAction: { fontWeight: 700, fontSize: 10, minWidth: 32 },
-  legContract: { color: '#60a5fa', fontSize: 10, flex: 1 },
+  legContract: { color: '#ff9e40', fontSize: 10, flex: 1 },
   legDetail: { color: '#6b7280', fontSize: 10 },
   greeksRow: {
     display: 'flex', gap: 12, marginTop: 8, padding: '6px 8px',
-    background: '#0d0e12', borderRadius: 3,
+    background: '#0a0a0a', borderRadius: 3,
   },
   greek: { fontSize: 10, color: '#9ca3af', fontFamily: MONO },
   summarySection: { padding: '14px' },
@@ -180,7 +180,7 @@ const S = {
     fontFamily: MONO,
   },
   pre: {
-    background: '#0a0b0d', color: '#86efac', padding: 14, borderRadius: 4,
+    background: '#000000', color: '#86efac', padding: 14, borderRadius: 4,
     fontSize: 10, overflowX: 'auto', fontFamily: MONO, lineHeight: 1.6,
     maxHeight: 400, overflowY: 'auto', border: '1px solid #1a1d25', whiteSpace: 'pre',
   },

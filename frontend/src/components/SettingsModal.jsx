@@ -76,8 +76,8 @@ export default function SettingsModal({ open, onClose, settings, onUpdate, onRes
     return (
         <div ref={ref} style={S.modal}>
             <div style={S.header}>
-                <span style={S.headerTitle}>⚙ Settings</span>
-                <button onClick={onClose} style={S.closeBtn}>✕</button>
+                <span style={S.headerTitle}>Settings</span>
+                <button onClick={onClose} style={S.closeBtn}></button>
             </div>
 
             <div style={S.body}>

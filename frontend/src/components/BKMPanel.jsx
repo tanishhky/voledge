@@ -41,7 +41,7 @@ export default function BKMPanel({ volData, analysis }) {
       {/* Header */}
       <div style={S.header}>
         <div style={S.headerTitle}>
-          <span style={S.headerIcon}>📐</span>
+          <span style={S.headerIcon}></span>
           BKM MODEL-FREE RISK-NEUTRAL MOMENTS
         </div>
         <div style={S.headerSub}>
@@ -146,8 +146,8 @@ function BKMTenorCard({ label, bkm, rv, physicalSkew, physicalKurt }) {
           label="Volatility"
           rnVal={fmt_pct(bkm.rn_volatility)}
           physVal={rv != null ? fmt_pct(rv) : 'N/A'}
-          rnColor="#60a5fa"
-          physColor="#22c55e"
+          rnColor="#ff9e40"
+          physColor="#29b6f6"
         />
 
         {/* Skewness */}
@@ -157,7 +157,7 @@ function BKMTenorCard({ label, bkm, rv, physicalSkew, physicalKurt }) {
           physVal={physicalSkew != null ? physicalSkew.toFixed(3) : 'N/A'}
           rnColor={moreDownside ? '#ef4444' : '#22c55e'}
           physColor="#d1d5db"
-          badge={moreDownside ? '⚠ MKT PRICING MORE DOWNSIDE' : skewDiff != null && skewDiff > 0.1 ? '↑ MKT UPSIDE BIASED' : null}
+          badge={moreDownside ? 'MKT PRICING MORE DOWNSIDE' : skewDiff != null && skewDiff > 0.1 ? '↑ MKT UPSIDE BIASED' : null}
           badgeColor={moreDownside ? '#ef4444' : '#f59e0b'}
         />
 
@@ -168,7 +168,7 @@ function BKMTenorCard({ label, bkm, rv, physicalSkew, physicalKurt }) {
           physVal={physicalKurt != null ? physicalKurt.toFixed(3) : 'N/A'}
           rnColor={moreTail ? '#f59e0b' : '#22c55e'}
           physColor="#d1d5db"
-          badge={moreTail ? '🔥 FAT TAILS PRICED IN' : kurtDiff != null && kurtDiff < -0.5 ? '✓ TAILS UNDERPRICED' : null}
+          badge={moreTail ? 'FAT TAILS PRICED IN' : kurtDiff != null && kurtDiff < -0.5 ? 'TAILS UNDERPRICED' : null}
           badgeColor={moreTail ? '#f59e0b' : '#22c55e'}
         />
 
@@ -177,7 +177,7 @@ function BKMTenorCard({ label, bkm, rv, physicalSkew, physicalKurt }) {
           label="Variance"
           rnVal={bkm.rn_variance?.toFixed(6)}
           physVal={rv != null ? (rv ** 2).toFixed(6) : 'N/A'}
-          rnColor="#a78bfa"
+          rnColor="#ff8000"
           physColor="#d1d5db"
         />
       </div>
@@ -207,13 +207,13 @@ function InsightPanel({ bkm30, bkm60, physicalSkew, physicalKurt, rv30, rv60 }) 
     if (bkm30.rn_skewness < (physicalSkew ?? 0) - 0.1) {
       insights.push({
         type: 'warning',
-        icon: '⚠',
+        icon: '',
         text: `30d risk-neutral skewness (${bkm30.rn_skewness.toFixed(3)}) is significantly more negative than physical (${physicalSkew?.toFixed(3) ?? 'N/A'}). The market is pricing substantially more downside risk than the historical distribution suggests. Put protection may be expensive.`,
       })
     } else if (bkm30.rn_skewness > (physicalSkew ?? 0) + 0.1) {
       insights.push({
         type: 'tip',
-        icon: '💡',
+        icon: '',
         text: `30d risk-neutral skewness (${bkm30.rn_skewness.toFixed(3)}) is less negative than physical (${physicalSkew?.toFixed(3) ?? 'N/A'}). Downside protection may be relatively cheap. Consider put spreads.`,
       })
     }
@@ -223,7 +223,7 @@ function InsightPanel({ bkm30, bkm60, physicalSkew, physicalKurt, rv30, rv60 }) 
       if (volDiff > 0.05) {
         insights.push({
           type: 'signal',
-          icon: '📊',
+          icon: '',
           text: `30d BKM vol (${fmt_pct(bkm30.rn_volatility)}) exceeds realized vol (${fmt_pct(rv30)}) by ${fmt_pct(volDiff)}. Model-free VRP is elevated — consider selling premium.`,
         })
       }
@@ -233,7 +233,7 @@ function InsightPanel({ bkm30, bkm60, physicalSkew, physicalKurt, rv30, rv60 }) 
   if (bkm60?.rn_kurtosis > (physicalKurt ?? 0) + 1.0) {
     insights.push({
       type: 'warning',
-      icon: '🔥',
+      icon: '',
       text: `60d risk-neutral kurtosis (${bkm60.rn_kurtosis.toFixed(2)}) far exceeds physical (${physicalKurt?.toFixed(2) ?? 'N/A'}). Market is pricing significant tail events. Wing options are expensive.`,
     })
   }
@@ -241,7 +241,7 @@ function InsightPanel({ bkm30, bkm60, physicalSkew, physicalKurt, rv30, rv60 }) 
   if (insights.length === 0) {
     insights.push({
       type: 'neutral',
-      icon: '✓',
+      icon: '',
       text: 'Risk-neutral and physical moments are approximately aligned. No significant mispricing detected.',
     })
   }
@@ -249,8 +249,8 @@ function InsightPanel({ bkm30, bkm60, physicalSkew, physicalKurt, rv30, rv60 }) 
   const colors = {
     warning: { bg: '#1a0f0f', border: '#ef4444', text: '#fca5a5' },
     tip: { bg: '#0a1a0f', border: '#22c55e', text: '#86efac' },
-    signal: { bg: '#0f0f1a', border: '#a78bfa', text: '#c4b5fd' },
-    neutral: { bg: '#111318', border: '#3b82f6', text: '#93c5fd' },
+    signal: { bg: '#0f0f1a', border: '#ff8000', text: '#ffb46b' },
+    neutral: { bg: '#111318', border: '#ff8000', text: '#ffcd99' },
   }
 
   return (
@@ -292,11 +292,11 @@ function SkewCompareChart({ bkm30, bkm60, physicalSkew }) {
       data={[
         {
           type: 'bar', name: 'Risk-Neutral (BKM)', x: labels, y: rnVals,
-          marker: { color: '#60a5fa', opacity: 0.9 },
+          marker: { color: '#ff9e40', opacity: 0.9 },
         },
         {
           type: 'bar', name: 'Physical (GMM)', x: labels, y: physVals,
-          marker: { color: '#22c55e', opacity: 0.7 },
+          marker: { color: '#29b6f6', opacity: 0.7 },
         },
       ]}
       layout={{
@@ -338,11 +338,11 @@ function VolCompareChart({ bkm30, bkm60, rv30, rv60 }) {
       data={[
         {
           type: 'bar', name: 'RN Vol (BKM)', x: labels, y: rnVols,
-          marker: { color: '#a78bfa', opacity: 0.9 },
+          marker: { color: '#ff8000', opacity: 0.9 },
         },
         {
           type: 'bar', name: 'Realized Vol', x: labels, y: rvVals,
-          marker: { color: '#22c55e', opacity: 0.7 },
+          marker: { color: '#29b6f6', opacity: 0.7 },
         },
       ]}
       layout={{
@@ -371,7 +371,7 @@ const darkAxis = {
 }
 const darkLayout = (title) => ({
   title: { text: title, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-  paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+  paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
   font: { color: '#9ca3af', family: DM }, hovermode: 'closest',
 })
 const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false }
@@ -379,7 +379,7 @@ const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false
 const S = {
   container: { display: 'flex', flexDirection: 'column', gap: 0 },
   header: {
-    padding: '12px 16px', background: '#0d0e12',
+    padding: '12px 16px', background: '#0a0a0a',
     borderBottom: '1px solid #1a1d25',
   },
   headerTitle: {
@@ -408,7 +408,7 @@ const S = {
   },
   cardsRow: {
     display: 'flex', gap: 1, padding: '8px 10px',
-    background: '#0a0b0d', borderBottom: '1px solid #1a1d25',
+    background: '#000000', borderBottom: '1px solid #1a1d25',
   },
   tenorCard: {
     flex: 1, background: '#111318', borderRadius: 6,
@@ -416,7 +416,7 @@ const S = {
   },
   tenorLabel: {
     fontSize: 11, fontWeight: 700, fontFamily: MONO,
-    color: '#60a5fa', letterSpacing: 1.5, marginBottom: 4,
+    color: '#ff9e40', letterSpacing: 1.5, marginBottom: 4,
   },
   tenorHeader: { marginBottom: 10 },
   tenorNoData: {
@@ -448,7 +448,7 @@ const S = {
     whiteSpace: 'nowrap',
   },
   insightContainer: {
-    padding: '10px 14px', background: '#0d0e12',
+    padding: '10px 14px', background: '#0a0a0a',
     borderBottom: '1px solid #1a1d25',
   },
   insightTitle: {

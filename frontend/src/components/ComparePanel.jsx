@@ -10,11 +10,11 @@ const darkAxis = {
 }
 const darkLayout = (title) => ({
   title: { text: title, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-  paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+  paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
   font: { color: '#9ca3af', family: DM }, hovermode: 'closest',
 })
 const plotConfig = { responsive: true, displayModeBar: false, displaylogo: false }
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#a78bfa', '#ec4899', '#14b8a6', '#f97316']
+const COLORS = ['#ff8000', '#22c55e', '#f59e0b', '#ef4444', '#ff8000', '#ec4899', '#14b8a6', '#f97316']
 
 export default function ComparePanel({ strategyHistory }) {
   const [selectedIds, setSelectedIds] = useState([])
@@ -22,7 +22,7 @@ export default function ComparePanel({ strategyHistory }) {
   if (!strategyHistory?.length) {
     return (
       <div style={S.empty}>
-        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}>⚖</div>
+        <div style={{ fontSize: 36, color: '#1e2230', marginBottom: 16 }}></div>
         <div style={{ fontSize: 16, color: '#6b7280', fontFamily: DM }}>No Strategies to Compare</div>
         <div style={{ fontSize: 12, color: '#4b5563', marginTop: 6, fontFamily: MONO, textAlign: 'center', maxWidth: 380 }}>
           Run multiple strategies in the STRATEGY tab. Each run is saved here for comparison.
@@ -193,7 +193,7 @@ function CorrelationMatrix({ strategies, ids }) {
   return (
     <Plot data={[{
       type: 'heatmap', z: corr, x: labels, y: labels,
-      colorscale: [[0, '#ef4444'], [0.5, '#0d0e12'], [1, '#22c55e']],
+      colorscale: [[0, '#ef4444'], [0.5, '#0a0a0a'], [1, '#22c55e']],
       zmin: -1, zmax: 1, showscale: true,
       texttemplate: '%{z:.2f}', textfont: { size: 11, color: '#e5e7eb', family: MONO },
       colorbar: { tickfont: { color: '#6b7280', size: 9 } },
@@ -219,7 +219,7 @@ const S = {
   section: { borderBottom: '1px solid #1a1d25' },
   sectionHeader: {
     padding: '8px 12px', fontSize: 10, fontWeight: 600, color: '#6b7280',
-    fontFamily: MONO, letterSpacing: 1, background: '#0d0e12', borderBottom: '1px solid #1a1d25',
+    fontFamily: MONO, letterSpacing: 1, background: '#0a0a0a', borderBottom: '1px solid #1a1d25',
   },
   chip: {
     background: '#151820', border: '1px solid #1e2230', borderRadius: 12,

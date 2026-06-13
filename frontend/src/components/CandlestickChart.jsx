@@ -32,7 +32,7 @@ export default function CandlestickChart({ candles, ticker }) {
       ]}
       layout={{
         title: { text: `${ticker} — OHLCV`, font: { color: '#d1d5db', size: 12, family: DM }, x: 0.02 },
-        paper_bgcolor: '#0a0b0d', plot_bgcolor: '#0d0e12',
+        paper_bgcolor: '#000000', plot_bgcolor: '#0a0a0a',
         font: { color: '#9ca3af', family: DM },
         xaxis: { gridcolor: '#1a1d25', linecolor: '#1a1d25', tickfont: { color: '#6b7280', size: 9, family: MONO }, rangeslider: { visible: false } },
         yaxis: { gridcolor: '#1a1d25', linecolor: '#1a1d25', tickfont: { color: '#6b7280', size: 9, family: MONO }, domain: [0.28, 1], title: { text: 'Price', font: { color: '#4b5563', size: 10, family: MONO } } },

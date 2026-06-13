@@ -52,6 +52,17 @@ export async function reprocessVolatility(params) {
   return data
 }
 
+export async function runMeanReversion(params) {
+  const res = await fetch(`${BASE}/mean-reversion`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(extractError(data, 'Mean-reversion analysis failed'))
+  return data
+}
+
 export async function getSupportedIntervals() {
   const res = await fetch(`${BASE}/supported-intervals`)
   return res.json()
