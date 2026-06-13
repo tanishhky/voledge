@@ -13,7 +13,7 @@
 
 \title{\textbf{VolEdge: Measuring and Trading the\\Variance Risk Premium with Model-Free\\Risk-Neutral Moments}}
 \author{Tanishk Yadav\\[2pt]\textit{MS Financial Engineering}\\NYU Tandon School of Engineering\\New York, NY, USA}
-\date{Technical note --- working draft}
+\date{Technical note - working draft}
 
 \begin{document}
 \maketitle
@@ -23,16 +23,16 @@
 VolEdge is a full-stack research platform built around a single thesis: the gap
 between what options \emph{price} and what the underlying \emph{realizes} is the
 risk premium, and that gap can be measured and traded. The platform extracts the
-risk-neutral distribution model-free via Bakshi--Kapadia--Madan (BKM) moments and
+risk-neutral distribution model-free via Bakshi-Kapadia-Madan (BKM) moments and
 compares it, horizon-matched, against the physical distribution estimated from
 realized returns; the spread $Q-P$ is surfaced for variance, skew, and kurtosis.
 A no-look-ahead walk-forward engine then backtests premium-driven strategies.
-We report two honest results on free data (2019--2024, net of modeled costs):
+We report two honest results on free data (2019-2024, net of modeled costs):
 a GARCH(1,1) volatility-targeted strategy beat SPY buy-and-hold on a risk-adjusted
 basis (Sharpe 0.85 vs.\ 0.68) with 41\% lower maximum drawdown, while a naive
 long-only variance-premium harvest \emph{lost} money (Sharpe $-0.16$), empirically
 confirming the premium as compensation for crash risk rather than harvestable
-alpha. The BKM extractor is validated against Black--Scholes chains of known
+alpha. The BKM extractor is validated against Black-Scholes chains of known
 volatility, and the backtest engine reproduces buy-and-hold to $\pm 0.000$ pp at
 any rebalance frequency.
 
@@ -50,8 +50,8 @@ two measures is the economic object of interest. VolEdge is organized entirely
 around keeping $Q$ and $P$ as distinct, separately estimated quantities and
 studying their difference.
 
-The platform measures the premium live for any ticker, and---because a historical
-per-name option surface is not available on free data---backtests the idea at the
+The platform measures the premium live for any ticker, and - because a historical
+per-name option surface is not available on free data - backtests the idea at the
 index level using the VIX as the risk-neutral volatility proxy. The two
 measurements are deliberately distinct; the backtest's role is to test whether the
 premium the live tool surfaces is economically real and harvestable, not to
@@ -92,9 +92,9 @@ crash protection beyond what history delivered.
 
 \subsection{Mean-reversion diagnostics}
 As a descriptive layer, the platform reports three independent reversion estimators
-on price, log-price, and realized volatility: the Ornstein--Uhlenbeck half-life
+on price, log-price, and realized volatility: the Ornstein-Uhlenbeck half-life
 from the AR(1) speed ($-\ln 2/\ln\phi$), the Hurst exponent, and a
-Dickey--Fuller-style $t$-statistic, plus a rolling half-life. A series is labelled
+Dickey-Fuller-style $t$-statistic, plus a rolling half-life. A series is labelled
 mean-reverting only when a finite in-sample half-life corroborates a Hurst below
 $0.5$.
 
@@ -108,7 +108,7 @@ per-leg model (spread, impact, slippage, commission).
 
 \section{Validation}
 
-\paragraph{BKM.} On a Black--Scholes chain of known 20\% volatility the extractor
+\paragraph{BKM.} On a Black-Scholes chain of known 20\% volatility the extractor
 recovers $\sigma_Q\approx0.20$ with skewness and excess kurtosis near zero, and
 converges toward truth as strike coverage widens; the residual bias is strike
 truncation, an inherent limitation of BKM on any finite chain. A synthetic
@@ -132,10 +132,10 @@ transaction costs.
 \toprule
 Strategy & Return & Ann. & Vol & Sharpe & Max DD\\
 \midrule
-GARCH vol-managed SPY (2020--24) & $+75.1\%$ & $11.9\%$ & $13.9\%$ & $\mathbf{0.85}$ & $\mathbf{-19.7\%}$\\
+GARCH vol-managed SPY (2020-24) & $+75.1\%$ & $11.9\%$ & $13.9\%$ & $\mathbf{0.85}$ & $\mathbf{-19.7\%}$\\
 \quad SPY buy-and-hold (same)     & $+94.6\%$ & $14.3\%$ & $21.0\%$ & $0.68$ & $-33.7\%$\\
-VIX variance-premium harvest (2019--24) & $-15.4\%$ & $-2.9\%$ & $17.8\%$ & $-0.16$ & $-44.0\%$\\
-\quad SPY (2019--24)              & $+123.9\%$ & $15.1\%$ & $20.1\%$ & $0.75$ & $-33.7\%$\\
+VIX variance-premium harvest (2019-24) & $-15.4\%$ & $-2.9\%$ & $17.8\%$ & $-0.16$ & $-44.0\%$\\
+\quad SPY (2019-24)              & $+123.9\%$ & $15.1\%$ & $20.1\%$ & $0.75$ & $-33.7\%$\\
 \bottomrule
 \end{tabular}
 \caption{Backtested premium-driven strategies vs.\ SPY.}
@@ -143,20 +143,20 @@ VIX variance-premium harvest (2019--24) & $-15.4\%$ & $-2.9\%$ & $17.8\%$ & $-0.
 
 \paragraph{GARCH volatility targeting (the positive result).}
 A GARCH(1,1) conditional-variance forecast scales SPY exposure to a constant
-15\% volatility target (Moreira--Muir), the remainder in T-bills. On an
+15\% volatility target (Moreira-Muir), the remainder in T-bills. On an
 apples-to-apples basis it delivered a higher Sharpe (0.85 vs.\ 0.68, $+25\%$) at
 41\% lower maximum drawdown and a realized 13.9\% volatility. Because volatility is
 forecastable while expected returns are not, scaling down in high-forecast-vol
-states improves the realized risk/return trade-off---and the variance premium
+states improves the realized risk/return trade-off - and the variance premium
 makes those states expensive to be long, so the de-risking is compensated.
 
 \paragraph{Variance-premium harvest (the reality check).}
 A long-only short-volatility harvester (short via SVXY when $\text{VIX}^2-$realized
 is positive, scaling down as VIX rises and stepping out above VIX 30) \emph{lost}
-money over 2019--2024 net of costs. This is the intended finding, not a hidden
+money over 2019-2024 net of costs. This is the intended finding, not a hidden
 failure: across the COVID-2020 and 2022 volatility spikes the premium behaves as
 compensation for crash risk, not harvestable alpha with simple long-only
-instruments---which is precisely why the premium exists. The platform thus both
+instruments - which is precisely why the premium exists. The platform thus both
 measures the premium and demonstrates that harvesting it naively is dangerous.
 
 \section{Limitations}
@@ -172,7 +172,7 @@ the headline.
 VolEdge closes the loop from measurement to execution for the variance risk
 premium: model-free risk-neutral moments versus horizon-matched realized moments,
 validated extractors, and a frequency-correct walk-forward engine. The empirical
-takeaway is that the premium is easy to measure and hard to keep---disciplined
+takeaway is that the premium is easy to measure and hard to keep - disciplined
 volatility targeting is compensated, while naive premium harvesting is not.
 
 \paragraph{Code.} \url{https://github.com/tanishhky/voledge}
