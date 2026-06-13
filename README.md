@@ -16,8 +16,12 @@ VolEdge is a full-stack platform built around that idea. It pairs:
    sandboxed (AST-validated) DSL, and backtest it with walk-forward optimization,
    Monte-Carlo tearsheets, and PDF reporting.
 
-Built on Polygon.io (free tier compatible). All greeks, IV, risk-neutral moments,
-and realized moments are computed locally — no paid analytics APIs required.
+**Runs with zero API keys.** Data comes from **Yahoo Finance by default** (free,
+~15-min delayed — candles *and* live option chains), with **Polygon.io** as an
+optional drop-in for higher rate limits (leave the key blank to use Yahoo). All
+greeks, IV, risk-neutral moments, and realized moments are computed locally — no
+paid analytics API required. The Yahoo options adapter is ported from the PinSight
+reference implementation.
 
 ## Architecture
 
@@ -93,7 +97,8 @@ Check out the interactive backtesting and analysis features:
 ![WFO Panel & Tearsheet Demo](assets/demos/tearsheet_wfo_demo.webp)
 
 ### 1. Data Fetching & Parallel Processing
-- **Multi-API Key Support** — Paste multiple Polygon keys (one per line or comma-separated) to bypass free tier constraints.
+- **Key-free by default (Yahoo Finance)** — Leave the API-key box blank and both candles and full option chains are pulled from Yahoo (`backend/yahoo_client.py`), no signup required. BKM/premium run on a real chain out of the box.
+- **Multi-API Key Support (Polygon, optional)** — Paste one or more Polygon keys to switch to Polygon and bypass its free-tier rate limits.
 - **Parallel Chunking** — The backend automatically splits historical date ranges across all available keys for concurrent fetching.
 - **Batched Option Lookups** — Options bars are fetched via round-robin key assignment. Rate limits are exactly managed (batch sizes and delays are configurable in settings).
 - **Multi-Source Abstraction** — `DataFetcher` supports yfinance (default), Alpha Vantage, and Tiingo for strategy backtesting.
@@ -260,7 +265,7 @@ npm run dev
 
 ### 3. Usage Guide
 
-1. **Setup**: Paste your Polygon.io API key(s) in the CONNECTION sidebar. More keys = much faster loads.
+1. **Setup**: Leave the CONNECTION key box blank to use free Yahoo Finance data (candles + option chains), or paste Polygon.io key(s) for higher rate limits.
 2. **Fetch**: Enter a ticker (e.g. SPY, BTCUSD), select a timeframe, and click **▶ Fetch & Analyze**.
 3. **Tweak Analysis**: Slide the Bin/N sliders. Click **⟳ Re-Analyze (GMM)** to instantly update the charts in the CHARTS and MOMENTS tabs.
 4. **Vol Scan**: Click **◈ Run Vol Analysis** to pull the options chain and compute the Volatility Surface, BKM Moments, and Signals.
@@ -328,8 +333,9 @@ POST  /strategy/wfo                    → Walk-forward optimization
 
 ## Limitations & Notes
 
-- **Free Tier Rate Limits**: Polygon allows 5 calls/min per key. The settings menu defaults ensure you stay exactly within this limit (`Batch Size`=5, `Delay`=61s). Providing multiple keys automatically scales throughput linearly.
-- **Options Data Limitations**: The free tier provides *daily* closing option bars. Real-time intraday bid/ask spreads require a paid Polygon tier. Transaction cost estimates use a 3% mid-price haircut when bid/ask is unavailable.
+- **Data sources**: Yahoo Finance (default, no key) returns candles and full option chains, ~15-min delayed, with no SLA — the library can break when Yahoo changes its schema. Polygon.io (optional, paste a key) allows 5 calls/min per free-tier key; the settings defaults (`Batch Size`=5, `Delay`=61s) stay within that, and multiple keys scale throughput linearly.
+- **BKM on real chains**: validated on live Yahoo SPY chains — recovers a sensible skew/kurtosis term structure (e.g. 30d skew ≈ −2.2 / kurt ≈ 9, 60d ≈ −1.6 / 3.4). The Yahoo adapter selects the expiries nearest the 30d/60d tenors and a ±20% strike window; wider windows inflate skew/kurtosis from deep-OTM quote noise. Kurtosis remains the least reliable moment on free data.
+- **Options Data Limitations**: Yahoo quotes are delayed snapshots; deep-OTM strikes can be stale (a liquidity filter drops quotes without a two-sided market or recent volume). Transaction-cost estimates use a 3% mid-price haircut when bid/ask is unavailable.
 - **BKM Requirements**: Model-free risk-neutral moments require ≥3 OTM calls and ≥3 OTM puts within the target DTE bucket. Broader strike ranges or deeper chains improve accuracy.
 - **IV Accuracy**: Black-Scholes inherently prices European options. For American equity options, there is a minor early-exercise discrepancy, but BS serves as the standard approximation.
 - **Signal Disclaimer**: Generated signals are mathematical indicators derived purely from statistical anomalies (VRP, Skew, KDE multimodality). They are **not** investment advice.

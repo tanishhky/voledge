@@ -6,11 +6,14 @@ recruiter link). Goal: prove the thesis end-to-end in 90 seconds. Record at
 
 ## Setup before recording
 - Backend + frontend running (`backend: uvicorn main:app`; `frontend: npm run dev`).
-- A ticker pre-loaded if you have a Polygon options key (e.g. SPY); otherwise run
-  the **backtest-only** variant below (no key needed).
-- Tabs to use, in order: **PRICE → REVERSION → SURFACE/PREMIUM → STRATEGY → RESULTS**.
+- **No API key needed** — leave the CONNECTION key box blank; everything
+  (candles, GMM, mean-reversion, *and* live option chains → BKM/premium) runs on
+  free Yahoo Finance data. Record during/near US market hours for the freshest
+  option quotes.
+- Use a liquid underlying (SPY/QQQ/AAPL) so the chain is deep.
+- Tabs in order: **PRICE → REVERSION → SURFACE → BKM → PREMIUM → STRATEGY → RESULTS**.
 
-## The 90 seconds (with key — full thesis)
+## The 90 seconds (key-free — full thesis)
 
 | Time | On screen | Say (one line) |
 |---|---|---|
@@ -21,13 +24,12 @@ recruiter link). Goal: prove the thesis end-to-end in 90 seconds. Record at
 | 0:55–1:15 | BACKTEST ▸ STRATEGY → run `garch_volmanaged` | "And I trade it: GARCH vol-targeting, walk-forward, zero look-ahead." |
 | 1:15–1:30 | BACKTEST ▸ RESULTS tearsheet | "Sharpe 0.85 vs SPY's 0.68 at 41% lower drawdown. The premium is real — and I show harvesting it naively *loses money*, which is why it exists." |
 
-## Backtest-only variant (NO API key)
-If you don't have a Polygon options key, skip SURFACE/BKM/PREMIUM live and lead
-with the engineering + results:
+## After-hours / weekend variant
+Yahoo option quotes are stale when markets are closed, so the live PREMIUM tab may
+be thin. If recording off-hours, lead with the engineering + results instead:
 1. STRATEGY → run `garch_volmanaged` (SPY/BIL) → RESULTS tearsheet (Sharpe 0.85).
 2. STRATEGY → run `vix_vrp` → RESULTS (the −15% "premium is crash-comp" finding).
-3. Cut to a still of the PREMIUM tab populated from a saved cache to show the
-   measurement layer.
+3. Show the PREMIUM tab from a cache saved during market hours.
 
 ## The one-paragraph caption (for the link)
 > VolEdge measures the variance/skew **risk premium** — model-free option-implied

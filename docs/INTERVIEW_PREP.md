@@ -157,6 +157,15 @@ rate-limit batching across keys), React + Plotly frontend, SQLite for
 strategy/run persistence, Docker compose. The compute (BS greeks, IV inversion via
 Brent, BKM, GMM, GARCH) is all local — no paid analytics API.
 
+**Q: Where does the data come from with no paid feed?**
+Two interchangeable adapters behind one interface. Default is Yahoo Finance
+(`yfinance`) — free, ~15-min delayed, returns candles *and* full option chains;
+Polygon.io is an optional drop-in for higher rate limits. The Yahoo options
+adapter (ported from my PinSight project) selects the expiries nearest the target
+tenors and applies a liquidity filter (two-sided quote or recent volume) so the
+BKM wing integrals aren't poisoned by stale deep-OTM prints. Limitation: it's a
+delayed snapshot with no SLA, fine for research/demo, not for production execution.
+
 **Q: Where would this break at scale / what would you do next?**
 (1) Real intraday option data (free tier is daily bars) to validate BKM on live
 chains. (2) Replace overlapping-return moment estimates with a cleaner term

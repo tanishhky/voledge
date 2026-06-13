@@ -30,6 +30,7 @@ from volatility_engine import (
 from bkm_engine import compute_bkm_moments
 from physical_moments import compute_physical_moments, compute_risk_premium
 from mean_reversion import mean_reversion_analysis
+from yahoo_client import fetch_candles_yahoo, fetch_option_chain_yahoo
 
 from strategy_engine import (
     StrategyDefinition, StrategyRunner, StrategyConfig, RegimeDefinition,
@@ -85,11 +86,14 @@ async def fetch(req: FetchRequest):
             asset_class = detect_asset_class(req.ticker)
 
         keys = req.api_keys if req.api_keys else settings.POLYGON_API_KEYS
-        if not keys:
-            raise HTTPException(status_code=400, detail="No Polygon API keys provided.")
-        n_keys = len(keys)
 
-        if n_keys > 1:
+        if not keys:
+            # Key-free fallback: Yahoo Finance (~15-min delayed, no SLA)
+            candles = await asyncio.to_thread(
+                fetch_candles_yahoo,
+                req.ticker, asset_class, req.timeframe, req.start_date, req.end_date,
+            )
+        elif len(keys) > 1:
             # Parallel multi-key fetch
             candles = await fetch_candles_parallel(
                 api_keys=keys,
@@ -269,107 +273,132 @@ async def volatility_analysis(req: VolatilityRequest):
         if req.gmm_d2:
             gmm_vol, gmm_kurt = compute_gmm_weighted_vol(req.gmm_d2)
 
-        # ── Step 2: Fetch option contracts ──
-        strike_lo = spot * (1 - req.strike_range_pct)
-        strike_hi = spot * (1 + req.strike_range_pct)
-
-        exp_gte = (today + timedelta(days=req.near_expiry_min_days)).strftime("%Y-%m-%d")
-        exp_lte = (today + timedelta(days=req.far_expiry_max_days)).strftime("%Y-%m-%d")
-
+        # ── Step 2-3: Fetch option chain + prices, build the enriched chain ──
         keys = req.api_keys if req.api_keys else settings.POLYGON_API_KEYS
-        if not keys:
-            raise HTTPException(status_code=400, detail="No Polygon API keys provided.")
-            
-        contracts = await fetch_options_contracts(
-            api_key=keys[0],
-            underlying_ticker=req.ticker,
-            expiration_date_gte=exp_gte,
-            expiration_date_lte=exp_lte,
-            strike_price_gte=strike_lo,
-            strike_price_lte=strike_hi,
-            limit=1000,
-        )
-
-        if not contracts:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No option contracts found for {req.ticker}. "
-                       "Ensure ticker is a US equity with listed options."
-            )
-
-        # ── Step 3: Get market prices and compute greeks ──
-        # Walk backwards from today to find the last trading day
-        bar_date = today
-        for _ in range(7):
-            if bar_date.weekday() < 5:
-                break
-            bar_date -= timedelta(days=1)
-        bar_date_str = bar_date.strftime("%Y-%m-%d")
-
-        # Polygon free tier: 5 req/min/key. Configurable via settings.
-        n_keys = len(keys)
-        batch_size = req.batch_size  # requests per key per batch
-        total_rate = batch_size * n_keys
-
         enriched_chain: list[OptionContractWithGreeks] = []
         cached_bars: dict = {}
 
-        for batch_start in range(0, len(contracts), total_rate):
-            batch = contracts[batch_start:batch_start + total_rate]
-
-            if batch_start > 0:
-                print(f"  [Vol] Rate limit pause ({req.batch_delay}s) before batch {batch_start}–{batch_start+len(batch)} ({len(contracts)} total)...")
-                await asyncio.sleep(req.batch_delay)
-
-            # Assign contracts to keys round-robin
-            key_batches: dict = {i: [] for i in range(n_keys)}
-            for idx, contract in enumerate(batch):
-                key_idx = idx % n_keys
-                key_batches[key_idx].append(contract)
-
-            # Fetch bars in parallel across keys
-            async def fetch_batch_for_key(key_idx, key_contracts):
-                results = []
-                for contract in key_contracts:
+        if not keys:
+            # ── Key-free path: Yahoo returns the whole chain in one call. A ±20%
+            # strike window balances BKM wing coverage against the quote noise of
+            # deep-OTM strikes (wider windows inflate skew/kurtosis on free data);
+            # expiries nearest the 30d/60d tenors are selected inside the adapter. ──
+            y_strike_lo, y_strike_hi = spot * 0.80, spot * 1.20
+            contracts, cached_bars = await asyncio.to_thread(
+                fetch_option_chain_yahoo, req.ticker, y_strike_lo, y_strike_hi, today, (30, 60),
+            )
+            if not contracts:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No Yahoo option chain for {req.ticker}. "
+                           "Ensure the ticker is a US equity/ETF with listed options.",
+                )
+            for contract in contracts:
+                bar = cached_bars.get(contract.ticker)
+                if bar and bar.get("close", 0) > 0:
                     try:
-                        bar = await fetch_option_daily_bar(
-                            api_key=keys[key_idx],
-                            option_ticker=contract.ticker,
-                            date=bar_date_str,
-                        )
-                        results.append((contract, bar))
+                        enriched_chain.append(enrich_contract(
+                            contract=contract, spot=spot, market_price=bar["close"],
+                            bid=None, ask=None, open_interest=None, volume=bar.get("volume"),
+                            r=req.risk_free_rate, q=req.dividend_yield, today=today,
+                        ))
                     except Exception:
-                        results.append((contract, None))
-                return results
+                        pass
+            print(f"  [Vol] Yahoo: enriched {len(enriched_chain)} / {len(contracts)} contracts")
 
-            tasks = [
-                fetch_batch_for_key(key_idx, key_contracts)
-                for key_idx, key_contracts in key_batches.items()
-                if key_contracts
-            ]
-            batch_results = await asyncio.gather(*tasks)
+        else:
+            # ── Polygon path ──
+            strike_lo = spot * (1 - req.strike_range_pct)
+            strike_hi = spot * (1 + req.strike_range_pct)
+            exp_gte = (today + timedelta(days=req.near_expiry_min_days)).strftime("%Y-%m-%d")
+            exp_lte = (today + timedelta(days=req.far_expiry_max_days)).strftime("%Y-%m-%d")
 
-            for key_results in batch_results:
-                for contract, bar in key_results:
-                    if bar and bar.get("close") and bar["close"] > 0:
-                        cached_bars[contract.ticker] = bar
+            contracts = await fetch_options_contracts(
+                api_key=keys[0],
+                underlying_ticker=req.ticker,
+                expiration_date_gte=exp_gte,
+                expiration_date_lte=exp_lte,
+                strike_price_gte=strike_lo,
+                strike_price_lte=strike_hi,
+                limit=1000,
+            )
+
+            if not contracts:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No option contracts found for {req.ticker}. "
+                           "Ensure ticker is a US equity with listed options."
+                )
+
+            # Walk backwards from today to find the last trading day
+            bar_date = today
+            for _ in range(7):
+                if bar_date.weekday() < 5:
+                    break
+                bar_date -= timedelta(days=1)
+            bar_date_str = bar_date.strftime("%Y-%m-%d")
+
+            # Polygon free tier: 5 req/min/key. Configurable via settings.
+            n_keys = len(keys)
+            batch_size = req.batch_size  # requests per key per batch
+            total_rate = batch_size * n_keys
+
+            for batch_start in range(0, len(contracts), total_rate):
+                batch = contracts[batch_start:batch_start + total_rate]
+
+                if batch_start > 0:
+                    print(f"  [Vol] Rate limit pause ({req.batch_delay}s) before batch {batch_start}–{batch_start+len(batch)} ({len(contracts)} total)...")
+                    await asyncio.sleep(req.batch_delay)
+
+                # Assign contracts to keys round-robin
+                key_batches: dict = {i: [] for i in range(n_keys)}
+                for idx, contract in enumerate(batch):
+                    key_idx = idx % n_keys
+                    key_batches[key_idx].append(contract)
+
+                # Fetch bars in parallel across keys
+                async def fetch_batch_for_key(key_idx, key_contracts):
+                    results = []
+                    for contract in key_contracts:
                         try:
-                            enriched = enrich_contract(
-                                contract=contract,
-                                spot=spot,
-                                market_price=bar["close"],
-                                bid=None, ask=None,
-                                open_interest=None,
-                                volume=bar.get("volume"),
-                                r=req.risk_free_rate,
-                                q=req.dividend_yield,
-                                today=today,
+                            bar = await fetch_option_daily_bar(
+                                api_key=keys[key_idx],
+                                option_ticker=contract.ticker,
+                                date=bar_date_str,
                             )
-                            enriched_chain.append(enriched)
+                            results.append((contract, bar))
                         except Exception:
-                            pass
+                            results.append((contract, None))
+                    return results
 
-        print(f"  [Vol] Enriched {len(enriched_chain)} / {len(contracts)} contracts")
+                tasks = [
+                    fetch_batch_for_key(key_idx, key_contracts)
+                    for key_idx, key_contracts in key_batches.items()
+                    if key_contracts
+                ]
+                batch_results = await asyncio.gather(*tasks)
+
+                for key_results in batch_results:
+                    for contract, bar in key_results:
+                        if bar and bar.get("close") and bar["close"] > 0:
+                            cached_bars[contract.ticker] = bar
+                            try:
+                                enriched = enrich_contract(
+                                    contract=contract,
+                                    spot=spot,
+                                    market_price=bar["close"],
+                                    bid=None, ask=None,
+                                    open_interest=None,
+                                    volume=bar.get("volume"),
+                                    r=req.risk_free_rate,
+                                    q=req.dividend_yield,
+                                    today=today,
+                                )
+                                enriched_chain.append(enriched)
+                            except Exception:
+                                pass
+
+            print(f"  [Vol] Enriched {len(enriched_chain)} / {len(contracts)} contracts")
 
         # ── Step 4-6: Build surface, compute metrics, generate signals ──
         surface = build_iv_surface(enriched_chain)
@@ -423,8 +452,8 @@ async def volatility_analysis(req: VolatilityRequest):
         signals = generate_signals(vol_analysis, enriched_chain, req.gmm_d2, spot, req.risk_free_rate)
 
         # BKM model-free risk-neutral moments
-        vol_analysis.rn_bkm_30d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 30)
-        vol_analysis.rn_bkm_60d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 60)
+        vol_analysis.rn_bkm_30d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 30, dte_tolerance=12)
+        vol_analysis.rn_bkm_60d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 60, dte_tolerance=12)
 
         # Physical (P-measure) moments at matched horizons + risk-premium spread (Q - P)
         vol_analysis.phys_30d = compute_physical_moments(req.candles, 30, req.timeframe, req.asset_class)
@@ -558,8 +587,8 @@ async def reprocess_volatility(req: ReprocessRequest):
         signals = generate_signals(vol_analysis, enriched_chain, req.gmm_d2, spot, req.risk_free_rate)
 
         # BKM model-free risk-neutral moments
-        vol_analysis.rn_bkm_30d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 30)
-        vol_analysis.rn_bkm_60d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 60)
+        vol_analysis.rn_bkm_30d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 30, dte_tolerance=12)
+        vol_analysis.rn_bkm_60d = compute_bkm_moments(enriched_chain, spot, req.risk_free_rate, 60, dte_tolerance=12)
 
         # Physical (P-measure) moments at matched horizons + risk-premium spread (Q - P)
         vol_analysis.phys_30d = compute_physical_moments(req.candles, 30, req.timeframe, req.asset_class)

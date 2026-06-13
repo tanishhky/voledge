@@ -120,9 +120,14 @@ export default function Controls({
         {/* API Key */}
         <Section title="CONNECTION" id="conn" collapsed={collapsed} toggle={toggle}>
           <textarea value={apiKeyInput} onChange={e => handleApiKeyInput(e.target.value)}
-            placeholder="Leave blank to use backend .env keys, or enter keys here"
+            placeholder="Leave blank for free Yahoo Finance data (incl. live option chains, ~15-min delayed). Paste Polygon key(s) for higher rate limits."
             rows={2}
             style={{ ...S.input, resize: 'vertical', minHeight: 32 }} />
+          {parseKeys().length === 0 && (
+            <div style={{ fontSize: 10, color: '#ff9e40', fontFamily: MONO, marginTop: 3 }}>
+              Yahoo Finance (free, delayed) — no key needed
+            </div>
+          )}
           {parseKeys().length > 0 && (
             <div style={{ fontSize: 10, color: parseKeys().length > 1 ? '#22c55e' : '#6b7280', fontFamily: MONO, marginTop: 3 }}>
               {parseKeys().length} key{parseKeys().length > 1 ? 's' : ''} detected
