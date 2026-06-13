@@ -35,3 +35,7 @@ demo_data/
 *.db
 *.db-shm
 *.db-wal
+
+# Personal prep materials — keep local, do not publish
+docs/INTERVIEW_PREP.md
+docs/DEMO_SCRIPT.md

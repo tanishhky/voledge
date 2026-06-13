@@ -60,7 +60,7 @@ function MomentsTable({ title, components, accent }) {
               <tr key={i} style={{ background: i % 2 === 0 ? '#0a0a0a' : 'transparent' }}>
                 <td style={S.td}>{c.component_index}</td>
                 <td style={S.td}>{c.weight.toFixed(4)}</td>
-                <td style={{ ...S.td, color: c.label === 'HVN' ? '#22c55e' : c.label === 'LVN' ? '#ef4444' : '#f59e0b', fontWeight: 600 }}>{c.label}</td>
+                <td style={{ ...S.td, color: c.label === 'Major' ? '#29b6f6' : c.label === 'Minor' ? '#6b7280' : '#f59e0b', fontWeight: 600 }}>{c.label}</td>
                 <td style={S.td}>{c.mean.toFixed(2)}</td>
                 <td style={S.td}>{c.std_dev.toFixed(4)}</td>
                 <td style={S.td}>{c.variance.toFixed(4)}</td>

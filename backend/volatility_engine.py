@@ -695,10 +695,10 @@ def generate_signals(
                         net_theta=None, net_gamma=None, net_vega=None,
                     ))
 
-    # ── Signal 4: GMM Mean-Reversion at Volume Nodes ──
+    # ── Signal 4: heuristic mean-reversion toward the dominant GMM density mode ──
     if gmm and gmm.components:
-        hvn_nodes = [c for c in gmm.components if c.label == "HVN"]
-        lvn_nodes = [c for c in gmm.components if c.label == "LVN"]
+        hvn_nodes = [c for c in gmm.components if c.label == "Major"]
+        lvn_nodes = [c for c in gmm.components if c.label == "Minor"]
 
         for hvn in hvn_nodes:
             distance = abs(spot - hvn.mean) / spot
@@ -725,9 +725,9 @@ def generate_signals(
                             signal_type="mean_reversion",
                             direction="buy_premium",
                             conviction="medium" if hvn.weight > 0.25 else "low",
-                            strategy="Long Call (target HVN)",
-                            description=f"Price at ${spot:.2f} is {distance:.1%} below HVN at ${hvn.mean:.2f} (weight: {hvn.weight:.1%}). High probability of reversion.",
-                            rationale=f"The volume-weighted distribution shows a High Volume Node (HVN) at ${hvn.mean:.2f} attracting {hvn.weight:.1%} of traded volume. Price tends to gravitate toward HVNs. Buy calls targeting this level.",
+                            strategy="Long Call (revert to modal level)",
+                            description=f"Price ${spot:.2f} sits {distance:.1%} below the volume-weighted GMM's dominant density mode at ${hvn.mean:.2f} (mixture weight {hvn.weight:.1%}).",
+                            rationale=f"The volume-weighted price distribution's highest-weight Gaussian mode is at ${hvn.mean:.2f} ({hvn.weight:.1%} of the mixture) — where the underlying spent the most volume-weighted time this window. Heuristic mean-reversion-to-mode; descriptive only, it does not account for drift or regime change and is not a standalone edge.",
                             legs=tc_legs,
                             max_loss=round(-tc_debit, 2),
                             net_delta=round(tc.delta or 0, 4),
@@ -756,9 +756,9 @@ def generate_signals(
                             signal_type="mean_reversion",
                             direction="buy_premium",
                             conviction="medium" if hvn.weight > 0.25 else "low",
-                            strategy="Long Put (target HVN)",
-                            description=f"Price at ${spot:.2f} is {distance:.1%} above HVN at ${hvn.mean:.2f} (weight: {hvn.weight:.1%}). High probability of reversion.",
-                            rationale=f"The volume-weighted distribution shows a High Volume Node (HVN) at ${hvn.mean:.2f} attracting {hvn.weight:.1%} of traded volume. Price tends to gravitate toward HVNs. Buy puts targeting this level.",
+                            strategy="Long Put (revert to modal level)",
+                            description=f"Price ${spot:.2f} sits {distance:.1%} above the volume-weighted GMM's dominant density mode at ${hvn.mean:.2f} (mixture weight {hvn.weight:.1%}).",
+                            rationale=f"The volume-weighted price distribution's highest-weight Gaussian mode is at ${hvn.mean:.2f} ({hvn.weight:.1%} of the mixture) — where the underlying spent the most volume-weighted time this window. Heuristic mean-reversion-to-mode; descriptive only, it does not account for drift or regime change and is not a standalone edge.",
                             legs=tp_legs,
                             max_loss=round(-tp_debit, 2),
                             net_delta=round(tp.delta or 0, 4),

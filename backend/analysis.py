@@ -171,12 +171,14 @@ def fit_gmm(
         skewness = 0.0
         kurtosis = 0.0
 
+        # Label by mixture weight (statistical, not market-profile folklore):
+        # "Major" = dominant mode, "Minor" = low-weight mode, "Mid" = in between.
         if weight > 0.20:
-            label = "HVN"
+            label = "Major"
         elif weight < 0.10:
-            label = "LVN"
+            label = "Minor"
         else:
-            label = "Neutral"
+            label = "Mid"
 
         components.append(GMMComponent(
             component_index=rank + 1,

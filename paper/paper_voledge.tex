@@ -11,125 +11,170 @@
 
 \hypersetup{colorlinks=true,linkcolor=blue!70!black,citecolor=blue!70!black,urlcolor=blue!70!black}
 
-\title{\textbf{VolEdge: A Full-Stack Volatility Trading Platform\\with GMM Price Distributions and\\Walk-Forward Strategy Optimization}}
-\author{Tanishk Yadav\\[2pt]\textit{MS Financial Engineering}\\NYU Tandon School of Engineering\\New York, NY, USA\\[2pt]ORCID: 0009-0006-2382-9411}
-\date{}
+\title{\textbf{VolEdge: Measuring and Trading the\\Variance Risk Premium with Model-Free\\Risk-Neutral Moments}}
+\author{Tanishk Yadav\\[2pt]\textit{MS Financial Engineering}\\NYU Tandon School of Engineering\\New York, NY, USA}
+\date{Technical note --- working draft}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
 \noindent
-VolEdge is a full-stack quantitative trading platform that combines price distribution analysis using Gaussian Mixture Models (GMM) with options volatility analysis and automated trade signal generation. The backend (FastAPI, 5,610 lines) computes implied volatility and Greeks locally via Black-Scholes, features a sandboxed walk-forward strategy engine with AST validation, parameter sensitivity sweeps with 3D surface visualization, and a walk-forward optimization (WFO) module with tearsheet generation. The frontend (React + Vite, 5,492 lines) provides candlestick charts, GMM decomposition visualization, IV surface/term structure/skew analysis, and an animated equity curve replay with interactive scrubbing. The platform is fully Dockerized and compatible with Polygon.io's free tier.
+VolEdge is a full-stack research platform built around a single thesis: the gap
+between what options \emph{price} and what the underlying \emph{realizes} is the
+risk premium, and that gap can be measured and traded. The platform extracts the
+risk-neutral distribution model-free via Bakshi--Kapadia--Madan (BKM) moments and
+compares it, horizon-matched, against the physical distribution estimated from
+realized returns; the spread $Q-P$ is surfaced for variance, skew, and kurtosis.
+A no-look-ahead walk-forward engine then backtests premium-driven strategies.
+We report two honest results on free data (2019--2024, net of modeled costs):
+a GARCH(1,1) volatility-targeted strategy beat SPY buy-and-hold on a risk-adjusted
+basis (Sharpe 0.85 vs.\ 0.68) with 41\% lower maximum drawdown, while a naive
+long-only variance-premium harvest \emph{lost} money (Sharpe $-0.16$), empirically
+confirming the premium as compensation for crash risk rather than harvestable
+alpha. The BKM extractor is validated against Black--Scholes chains of known
+volatility, and the backtest engine reproduces buy-and-hold to $\pm 0.000$ pp at
+any rebalance frequency.
 
 \medskip
-\noindent\textbf{Keywords:} volatility trading, Gaussian Mixture Models, options pricing, Black-Scholes, walk-forward optimization, full-stack, React, FastAPI
+\noindent\textbf{Keywords:} variance risk premium, risk-neutral moments, BKM,
+volatility targeting, walk-forward backtesting, options.
 \end{abstract}
 
 \section{Introduction}
 
-Quantitative trading research typically exists as disconnected notebooks and scripts. VolEdge consolidates the research-to-execution pipeline into a single platform, covering price distribution analysis, options volatility modeling, trade signal generation, and strategy backtesting. The platform is designed for a single user performing volatility-focused research across equities, cryptocurrencies, and forex.
+In a frictionless world the option-implied (risk-neutral, $Q$) distribution would
+equal the physical (real-world, $P$) distribution. It does not: $Q$ embeds a risk
+premium, so an option's price is \emph{not} a probability. The wedge between the
+two measures is the economic object of interest. VolEdge is organized entirely
+around keeping $Q$ and $P$ as distinct, separately estimated quantities and
+studying their difference.
 
-\section{System Architecture}
+The platform measures the premium live for any ticker, and---because a historical
+per-name option surface is not available on free data---backtests the idea at the
+index level using the VIX as the risk-neutral volatility proxy. The two
+measurements are deliberately distinct; the backtest's role is to test whether the
+premium the live tool surfaces is economically real and harvestable, not to
+reproduce BKM historically.
 
-The platform follows a client-server architecture with Docker Compose orchestration.
+\section{Methods}
 
-\subsection{Backend (FastAPI)}
+\subsection{Risk-neutral moments (BKM)}
+Following Bakshi, Kapadia, and Madan (2003), any twice-differentiable payoff is
+spanned by a continuum of out-of-the-money (OTM) options. The variance, cubic, and
+quartic contracts therefore have known strike weights, and their prices
+$V,W,X$ are obtained by integrating OTM call and put prices across strikes. With
+$\log$-moneyness $\ell=\ln(K/S)$ the call and put integrands unify:
+\[
+V=\!\int\! \frac{2(1-\ell)}{K^2}O(K)\,dK,\quad
+W=\!\int\! \frac{6\ell-3\ell^2}{K^2}O(K)\,dK,\quad
+X=\!\int\! \frac{12\ell^2-4\ell^3}{K^2}O(K)\,dK,
+\]
+where $O(K)$ is the OTM option price. Risk-neutral variance, skewness, and
+(excess) kurtosis follow in closed form, with a single $e^{rT}$ entering the
+moment formulas (not the integrands). Integration uses composite Simpson's rule
+over the irregular strike grid with a trapezoidal fallback. No distributional
+assumption is made.
 
-The backend comprises 10 Python modules totaling 5,610 lines:
+\subsection{Physical moments and the premium}
+The physical distribution is estimated horizon-matched: because skew and kurtosis
+are horizon-dependent, they are computed on \emph{overlapping $T$-day log returns}
+rather than daily returns, where $T$ matches the BKM tenor. The premium is the
+difference at each tenor,
+\[
+\text{VRP}=\sigma^2_Q-\sigma^2_P,\qquad
+\text{skew premium}=s_Q-s_P,\qquad
+\text{kurt premium}=k_Q-k_P .
+\]
+A persistently positive variance premium means options price more variance than
+realizes; a more negative $Q$-skew than $P$-skew means the market pays up for
+crash protection beyond what history delivered.
 
-\begin{itemize}[nosep]
-    \item \texttt{main.py}: FastAPI application with all endpoint definitions.
-    \item \texttt{polygon\_client.py}: Polygon.io API client for stock, crypto, and forex OHLCV data with parallel fetching for multi-asset analysis.
-    \item \texttt{options\_client.py}: Options contract discovery and historical bars from Polygon.io.
-    \item \texttt{analysis.py}: Core distribution analysis---D1 (full period) and D2 (recent window) price distributions, GMM fitting with automatic component selection, and moment evolution tracking (mean, variance, weight, kurtosis over rolling windows).
-    \item \texttt{volatility\_engine.py}: Black-Scholes pricing, implied volatility computation via Brent's method, volatility risk premium (VRP) estimation, and automated trade signal generation based on IV/RV dislocations.
-    \item \texttt{strategy\_engine.py}: Walk-forward backtesting engine. User strategies are written in Python and validated via AST (Abstract Syntax Tree) analysis before execution to prevent arbitrary code injection. The engine runs strategies in a sandboxed environment with restricted imports.
-    \item \texttt{strategy\_routes.py}: API routes for strategy execution, parameter sweeps, and optimization.
-    \item \texttt{tearsheet\_engine.py}: Generates quantitative performance reports (Sharpe, Sortino, Calmar, drawdown analysis, monthly returns heatmap).
-    \item \texttt{wfo\_engine.py}: Walk-forward optimization with configurable training/testing window ratios, metric-based parameter selection, and out-of-sample performance tracking.
-    \item \texttt{data\_quality.py}: Data validation, gap detection, and corporate action adjustment.
-\end{itemize}
+\subsection{Mean-reversion diagnostics}
+As a descriptive layer, the platform reports three independent reversion estimators
+on price, log-price, and realized volatility: the Ornstein--Uhlenbeck half-life
+from the AR(1) speed ($-\ln 2/\ln\phi$), the Hurst exponent, and a
+Dickey--Fuller-style $t$-statistic, plus a rolling half-life. A series is labelled
+mean-reverting only when a finite in-sample half-life corroborates a Hurst below
+$0.5$.
 
-\subsection{Frontend (React + Vite)}
+\subsection{Walk-forward engine}
+Strategies are evaluated day-by-day; at each decision point the strategy sees only
+data up to the prior close. Strategy code is AST-validated and sandboxed
+(whitelisted numerical imports, no I/O or network). Positions are marked to
+market \emph{before} any rebalance, so returns accrue correctly at every rebalance
+frequency; turnover cost is charged on the actual drift-to-target trade with a
+per-leg model (spread, impact, slippage, commission).
 
-The frontend comprises 15 JSX components totaling 5,492 lines:
+\section{Validation}
 
-\begin{itemize}[nosep]
-    \item \texttt{CandlestickChart.jsx}: Interactive OHLCV chart with volume overlay using Plotly.
-    \item \texttt{DistributionChart.jsx}: D1/D2 histograms with kernel density estimation overlay.
-    \item \texttt{GMMChart.jsx}: GMM component decomposition showing individual Gaussian components and their weights.
-    \item \texttt{ComparisonChart.jsx}: D1 vs. D2 distribution overlay for regime shift detection.
-    \item \texttt{VolatilityPanel.jsx}: IV surface (strike $\times$ expiry), term structure, skew visualization, and full options chain table.
-    \item \texttt{SignalsPanel.jsx}: Trade signals with specific option legs, net Greeks, and projected P\&L scenarios.
-    \item \texttt{MomentsChart.jsx}: 2$\times$2 panel showing GMM moment evolution over time.
-    \item \texttt{StrategyPanel.jsx}: Code editor for custom strategy definitions with syntax highlighting, configuration panel, and walk-forward execution trigger.
-    \item \texttt{SensitivityPanel.jsx}: 3D surface plot of strategy performance metrics across parameter combinations.
-    \item \texttt{WfoPanel.jsx}: Walk-forward optimization results with train/test metric comparison.
-    \item \texttt{TearsheetPanel.jsx}: Comprehensive strategy performance report.
-    \item \texttt{EquityAnimator.jsx}: Animated equity curve replay with interactive scrubbing and playback controls.
-\end{itemize}
+\paragraph{BKM.} On a Black--Scholes chain of known 20\% volatility the extractor
+recovers $\sigma_Q\approx0.20$ with skewness and excess kurtosis near zero, and
+converges toward truth as strike coverage widens; the residual bias is strike
+truncation, an inherent limitation of BKM on any finite chain. A synthetic
+put-skew chain correctly yields negative risk-neutral skew. On live SPY chains
+(via free Yahoo Finance data) the moments show a sensible term structure
+(e.g.\ 30d skew $\approx -2.2$, kurtosis $\approx 9$; 60d $\approx -1.6$, $3.4$),
+consistent with published equity-index estimates.
 
-\section{Core Analytical Methods}
+\paragraph{Engine.} A 100\%-SPY strategy reproduces SPY buy-and-hold to
+$\pm 0.000$ percentage points at rebalance frequencies of 1, 5, 21, and 63 days,
+confirming the mark-to-market is correct and frequency-independent.
 
-\subsection{Price Distribution Analysis}
+\section{Results}
 
-For a given asset, VolEdge fits two distributions:
-\begin{itemize}[nosep]
-    \item \textbf{D1}: Distribution over the full historical period, representing the ``base case'' regime.
-    \item \textbf{D2}: Distribution over a recent window (configurable), capturing the current regime.
-\end{itemize}
+All figures are out-of-sample, on free Yahoo Finance data, net of modeled
+transaction costs.
 
-Each distribution is modeled as a Gaussian Mixture Model with $K$ components selected via BIC minimization:
-\begin{equation}
-    p(x) = \sum_{k=1}^{K} \pi_k \, \mathcal{N}(x \mid \mu_k, \sigma_k^2)
-\end{equation}
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Strategy & Return & Ann. & Vol & Sharpe & Max DD\\
+\midrule
+GARCH vol-managed SPY (2020--24) & $+75.1\%$ & $11.9\%$ & $13.9\%$ & $\mathbf{0.85}$ & $\mathbf{-19.7\%}$\\
+\quad SPY buy-and-hold (same)     & $+94.6\%$ & $14.3\%$ & $21.0\%$ & $0.68$ & $-33.7\%$\\
+VIX variance-premium harvest (2019--24) & $-15.4\%$ & $-2.9\%$ & $17.8\%$ & $-0.16$ & $-44.0\%$\\
+\quad SPY (2019--24)              & $+123.9\%$ & $15.1\%$ & $20.1\%$ & $0.75$ & $-33.7\%$\\
+\bottomrule
+\end{tabular}
+\caption{Backtested premium-driven strategies vs.\ SPY.}
+\end{table}
 
-Moment evolution tracks how each component's mean, variance, weight, and kurtosis change over rolling windows, providing a visual representation of regime shifts.
+\paragraph{GARCH volatility targeting (the positive result).}
+A GARCH(1,1) conditional-variance forecast scales SPY exposure to a constant
+15\% volatility target (Moreira--Muir), the remainder in T-bills. On an
+apples-to-apples basis it delivered a higher Sharpe (0.85 vs.\ 0.68, $+25\%$) at
+41\% lower maximum drawdown and a realized 13.9\% volatility. Because volatility is
+forecastable while expected returns are not, scaling down in high-forecast-vol
+states improves the realized risk/return trade-off---and the variance premium
+makes those states expensive to be long, so the de-risking is compensated.
 
-\subsection{Options Volatility Engine}
-
-Implied volatility is computed by inverting the Black-Scholes formula via Brent's root-finding method. The engine constructs:
-\begin{itemize}[nosep]
-    \item \textbf{IV Surface}: Implied volatility as a function of strike price and time to expiration.
-    \item \textbf{Term Structure}: At-the-money IV across expiration dates.
-    \item \textbf{Skew}: IV as a function of moneyness for a fixed expiration.
-    \item \textbf{VRP}: Volatility Risk Premium = IV $-$ RV, where RV is realized volatility over a trailing window.
-\end{itemize}
-
-Trade signals are generated when VRP exceeds configurable thresholds, with specific option structures (straddles, strangles, spreads) selected based on the signal direction and magnitude.
-
-\subsection{Walk-Forward Strategy Engine}
-
-The strategy engine accepts user-defined Python strategies, validates them via AST analysis (rejecting dangerous operations like \texttt{exec}, \texttt{eval}, file I/O, and network calls), and executes them in a walk-forward framework. The engine supports:
-\begin{itemize}[nosep]
-    \item Configurable train/test split ratios
-    \item Parameter grid search within each training window
-    \item Out-of-sample performance tracking
-    \item Sensitivity analysis via 2D parameter sweeps rendered as 3D surface plots
-\end{itemize}
+\paragraph{Variance-premium harvest (the reality check).}
+A long-only short-volatility harvester (short via SVXY when $\text{VIX}^2-$realized
+is positive, scaling down as VIX rises and stepping out above VIX 30) \emph{lost}
+money over 2019--2024 net of costs. This is the intended finding, not a hidden
+failure: across the COVID-2020 and 2022 volatility spikes the premium behaves as
+compensation for crash risk, not harvestable alpha with simple long-only
+instruments---which is precisely why the premium exists. The platform thus both
+measures the premium and demonstrates that harvesting it naively is dangerous.
 
 \section{Limitations}
-
-\begin{itemize}[nosep]
-    \item \textbf{Black-Scholes assumption}: Constant volatility and log-normal returns are unrealistic. Stochastic volatility models (Heston, SABR) are not yet implemented.
-    \item \textbf{Single-asset strategies}: The walk-forward engine does not support multi-asset or cross-instrument strategies.
-    \item \textbf{No live trading}: The platform is research-only; there is no brokerage API integration for paper or live trading.
-    \item \textbf{Frontend UX}: The interface is functional but not polished for non-technical users.
-    \item \textbf{Polygon.io free tier}: Rate limits and data delays on the free tier constrain real-time analysis.
-\end{itemize}
+Yahoo Finance quotes are $\sim$15-minute-delayed snapshots with no SLA; deep-OTM
+strikes can be stale (mitigated by a liquidity filter and a $\pm 20\%$ strike
+window). Kurtosis is the least reliable BKM moment on free data. The live premium
+(per-name BKM snapshot) and the backtest (index VIX proxy) measure the idea two
+different ways. The walk-forward accounting is weight-based rather than a full
+position ledger. None of the reported numbers are tuned via parameter search behind
+the headline.
 
 \section{Conclusion}
+VolEdge closes the loop from measurement to execution for the variance risk
+premium: model-free risk-neutral moments versus horizon-matched realized moments,
+validated extractors, and a frequency-correct walk-forward engine. The empirical
+takeaway is that the premium is easy to measure and hard to keep---disciplined
+volatility targeting is compensated, while naive premium harvesting is not.
 
-VolEdge demonstrates that a comprehensive volatility trading research platform can be built as a single full-stack application. The 11,102-line codebase (5,610 backend + 5,492 frontend) integrates price distribution analysis, options volatility modeling, automated signal generation, and walk-forward strategy optimization with parameter sensitivity analysis. The platform is Dockerized for reproducible deployment and extensible for future enhancements including stochastic volatility pricing and live trading integration.
-
-\medskip
-\noindent\textbf{Code Availability:} \url{https://github.com/tanishhky/price-distribution-analysis-tool}
-
-\begin{thebibliography}{5}
-\bibitem{black1973} F.~Black and M.~Scholes, ``The pricing of options and corporate liabilities,'' \textit{Journal of Political Economy}, vol.~81, no.~3, pp.~637--654, 1973.
-\bibitem{mclachlan2000} G.~McLachlan and D.~Peel, \textit{Finite Mixture Models}. New York: Wiley, 2000.
-\bibitem{gatheral2006} J.~Gatheral, \textit{The Volatility Surface: A Practitioner's Guide}. Hoboken, NJ: Wiley, 2006.
-\end{thebibliography}
+\paragraph{Code.} \url{https://github.com/tanishhky/voledge}
 
 \end{document}
