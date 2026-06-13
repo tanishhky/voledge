@@ -30,7 +30,10 @@ export default function App() {
   const [candles, setCandles] = useState(null)
   const [analysis, setAnalysis] = useState(null)
   const [volData, setVolData] = useState(null)
-  const [activeTab, setActiveTab] = useState('charts')
+  const [activeTab, setActiveTab] = useState('price')
+  // Sub-views for consolidated tabs
+  const [subView, setSubView] = useState({ price: 'charts', tearsheet: 'tearsheet', optimize: 'sensitivity' })
+  const setSub = (tab, view) => setSubView(p => ({ ...p, [tab]: view }))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, updateSettings, resetSettings] = useSettings()
   const [strategyResult, setStrategyResult] = useState(null)
@@ -147,7 +150,7 @@ export default function App() {
       const nSignals = result.trade_signals?.length || 0
       const nContracts = result.volatility_analysis?.chain?.length || 0
       setOk(`Vol analysis complete — ${nContracts} contracts, ${nSignals} signals`)
-      setActiveTab('volatility')
+      setActiveTab('surface')
     } catch (err) { setErr(err?.message || String(err)) }
     finally { setLoading(false) }
   }
@@ -180,7 +183,7 @@ export default function App() {
       const nSignals = result.trade_signals?.length || 0
       const nContracts = result.volatility_analysis?.chain?.length || 0
       setOk(`Reprocessed — ${nContracts} contracts, ${nSignals} signals (no API calls)`)
-      setActiveTab('volatility')
+      setActiveTab('surface')
     } catch (err) { setErr(err?.message || String(err)) }
     finally { setLoading(false) }
   }
@@ -286,24 +289,30 @@ export default function App() {
     reader.readAsText(file)
   }
 
-  const TABS = [
-    { id: 'charts', label: 'CHARTS', icon: '▤' },
-    { id: 'profile', label: 'PROFILE', icon: '▥' },
-    { id: 'volatility', label: 'VOL', icon: '◈', accent: true },
-    { id: 'bkm', label: 'BKM', icon: '', accent: true },
-    { id: 'premium', label: 'PREMIUM', icon: 'Δ', accent: true },
-    { id: 'signals', label: 'SIGNALS', icon: '', accent: true },
-    { id: 'results', label: 'DATA', icon: '≡' },
-    { id: 'moments', label: 'MOMENTS', icon: '' },
-    { id: 'reversion', label: 'REVERSION', icon: '↻', accent: true },
-    { id: 'strategy', label: 'STRATEGY', icon: '', accent: true },
-    { id: 'library', label: 'LIBRARY', icon: '' },
-    { id: 'tearsheet', label: 'TEARSHEET', icon: '', accent: true },
-    { id: 'compare', label: 'COMPARE', icon: '' },
-    { id: 'sensitivity', label: 'SENSITIVITY', icon: '', accent: true },
-    { id: 'wfo', label: 'WFO', icon: '', accent: true },
-    { id: 'animate', label: 'ANIMATE', icon: '▶', accent: true },
-    { id: 'merge', label: 'MERGE', icon: '⊕' },
+  // Tabs grouped by function: EQUITY (the underlying) | OPTIONS (derivatives)
+  // | BACKTEST (strategy lab) | DATA (utilities). Several legacy tabs are
+  // consolidated and reached via in-panel sub-toggles.
+  const TAB_GROUPS = [
+    { group: 'EQUITY', tabs: [
+      { id: 'price', label: 'PRICE' },
+      { id: 'moments', label: 'MOMENTS' },
+      { id: 'reversion', label: 'REVERSION', accent: true },
+    ]},
+    { group: 'OPTIONS', tabs: [
+      { id: 'surface', label: 'SURFACE', accent: true },
+      { id: 'bkm', label: 'BKM', accent: true },
+      { id: 'premium', label: 'PREMIUM', accent: true },
+      { id: 'signals', label: 'SIGNALS', accent: true },
+    ]},
+    { group: 'BACKTEST', tabs: [
+      { id: 'strategy', label: 'STRATEGY', accent: true },
+      { id: 'tearsheet', label: 'RESULTS', accent: true },
+      { id: 'optimize', label: 'OPTIMIZE', accent: true },
+      { id: 'library', label: 'LIBRARY' },
+    ]},
+    { group: 'TOOLS', tabs: [
+      { id: 'merge', label: 'MERGE' },
+    ]},
   ]
 
   const handleDragStart = useCallback((e) => {
@@ -366,11 +375,17 @@ export default function App() {
         {/* Tab bar */}
         <div style={S.topBar}>
           <div style={S.tabs}>
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)}
-                style={{ ...S.tab, ...(activeTab === t.id ? S.tabActive : {}), ...(t.accent && activeTab === t.id ? S.tabAccent : {}) }}>
-                <span style={S.tabIcon}>{t.icon}</span>{t.label}
-              </button>
+            {TAB_GROUPS.map((g, gi) => (
+              <div key={g.group} style={S.tabGroup}>
+                {gi > 0 && <div style={S.groupDivider} />}
+                <span style={S.groupLabel}>{g.group}</span>
+                {g.tabs.map(t => (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)}
+                    style={{ ...S.tab, ...(activeTab === t.id ? S.tabActive : {}) }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
           <div style={{ ...S.statusIndicator, position: 'relative' }}>
@@ -391,7 +406,7 @@ export default function App() {
 
         {/* Content */}
         <div style={S.content}>
-          {!analysis && !loading && !['strategy', 'animate', 'merge', 'tearsheet', 'compare', 'library', 'sensitivity', 'wfo'].includes(activeTab) && (
+          {!analysis && !loading && !['strategy', 'tearsheet', 'optimize', 'library', 'merge'].includes(activeTab) && (
             <div style={S.placeholder}>
               <div style={S.placeholderIcon}>◈</div>
               <div style={S.placeholderTitle}>VolEdge Trading System</div>
@@ -409,46 +424,56 @@ export default function App() {
 
           {analysis && !loading && (
             <>
-              {activeTab === 'charts' && (
-                <div style={S.grid}>
-                  <div style={{ ...S.cell, height: 300 }}>
-                    <CandlestickChart candles={candles} ticker={analysis.ticker} />
-                  </div>
-                  <div style={{ ...S.cell, height: H }}>
-                    <GMMChart dist={analysis.d1} gmm={analysis.gmm_d1} label="D1: Time-at-Price" distKey="d1" height={H} />
-                  </div>
-                  <div style={{ ...S.cell, height: H }}>
-                    <GMMChart dist={analysis.d2} gmm={analysis.gmm_d2} label="D2: Volume-Weighted" distKey="d2" height={H} />
-                  </div>
-                  <div style={{ ...S.cell, height: H }}>
-                    <ComparisonChart d1={analysis.d1} d2={analysis.d2} gmmD1={analysis.gmm_d1} gmmD2={analysis.gmm_d2} height={H} />
-                  </div>
-                </div>
+              {activeTab === 'price' && (
+                <>
+                  <SubTabs
+                    items={[{ id: 'charts', label: 'CHARTS' }, { id: 'profile', label: 'PROFILE' }, { id: 'data', label: 'STATS' }]}
+                    value={subView.price} onChange={(v) => setSub('price', v)}
+                  />
+                  {subView.price === 'charts' && (
+                    <div style={S.grid}>
+                      <div style={{ ...S.cell, height: 300 }}>
+                        <CandlestickChart candles={candles} ticker={analysis.ticker} />
+                      </div>
+                      <div style={{ ...S.cell, height: H }}>
+                        <GMMChart dist={analysis.d1} gmm={analysis.gmm_d1} label="D1: Time-at-Price" distKey="d1" height={H} />
+                      </div>
+                      <div style={{ ...S.cell, height: H }}>
+                        <GMMChart dist={analysis.d2} gmm={analysis.gmm_d2} label="D2: Volume-Weighted" distKey="d2" height={H} />
+                      </div>
+                      <div style={{ ...S.cell, height: H }}>
+                        <ComparisonChart d1={analysis.d1} d2={analysis.d2} gmmD1={analysis.gmm_d1} gmmD2={analysis.gmm_d2} height={H} />
+                      </div>
+                    </div>
+                  )}
+                  {subView.price === 'profile' && (
+                    <div style={S.grid}>
+                      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #1a1d25', height: 320 }}>
+                        <div style={{ flex: 2, minWidth: 0 }}>
+                          <CandlestickChart candles={candles} ticker={analysis.ticker} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 180 }}>
+                          <DistributionChart dist={analysis.d1} label="D1" distKey="d1" orientation="horizontal" height={320} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 180 }}>
+                          <DistributionChart dist={analysis.d2} label="D2" distKey="d2" orientation="horizontal" height={320} />
+                        </div>
+                      </div>
+                      <div style={S.cell}>
+                        <DistributionChart dist={analysis.d1} label="D1: Time-at-Price" distKey="d1" height={H} />
+                      </div>
+                      <div style={S.cell}>
+                        <DistributionChart dist={analysis.d2} label="D2: Volume-Weighted" distKey="d2" height={H} />
+                      </div>
+                    </div>
+                  )}
+                  {subView.price === 'data' && (
+                    <ResultsPanel resultsText={analysis.results_text} analysisData={analysis} />
+                  )}
+                </>
               )}
 
-              {activeTab === 'profile' && (
-                <div style={S.grid}>
-                  <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #1a1d25', height: 320 }}>
-                    <div style={{ flex: 2, minWidth: 0 }}>
-                      <CandlestickChart candles={candles} ticker={analysis.ticker} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 180 }}>
-                      <DistributionChart dist={analysis.d1} label="D1" distKey="d1" orientation="horizontal" height={320} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 180 }}>
-                      <DistributionChart dist={analysis.d2} label="D2" distKey="d2" orientation="horizontal" height={320} />
-                    </div>
-                  </div>
-                  <div style={S.cell}>
-                    <DistributionChart dist={analysis.d1} label="D1: Time-at-Price" distKey="d1" height={H} />
-                  </div>
-                  <div style={S.cell}>
-                    <DistributionChart dist={analysis.d2} label="D2: Volume-Weighted" distKey="d2" height={H} />
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'volatility' && (
+              {activeTab === 'surface' && (
                 volData
                   ? <VolatilityPanel volData={volData} />
                   : <div style={S.placeholder}>
@@ -486,10 +511,6 @@ export default function App() {
                     <div style={S.placeholderTitle}>No Signals Yet</div>
                     <div style={S.placeholderSub}>Run volatility analysis to generate trade signals</div>
                   </div>
-              )}
-
-              {activeTab === 'results' && (
-                <ResultsPanel resultsText={analysis.results_text} analysisData={analysis} />
               )}
 
               {activeTab === 'moments' && analysis.moment_evolution && (
@@ -536,23 +557,30 @@ export default function App() {
           )}
 
           {activeTab === 'tearsheet' && (
-            <TearsheetPanel strategyResult={strategyResult} />
+            <>
+              <SubTabs
+                items={[{ id: 'tearsheet', label: 'TEARSHEET' }, { id: 'animate', label: 'ANIMATE' }, { id: 'compare', label: 'COMPARE' }]}
+                value={subView.tearsheet} onChange={(v) => setSub('tearsheet', v)}
+              />
+              {subView.tearsheet === 'tearsheet' && <TearsheetPanel strategyResult={strategyResult} />}
+              {subView.tearsheet === 'animate' && <EquityAnimator strategyResult={strategyResult} />}
+              {subView.tearsheet === 'compare' && <ComparePanel strategyHistory={strategyHistory} />}
+            </>
           )}
 
-          {activeTab === 'compare' && (
-            <ComparePanel strategyHistory={strategyHistory} />
-          )}
-
-          {activeTab === 'sensitivity' && (
-            <SensitivityPanel strategyResult={strategyResult} sessionId={strategyResult?.session_id} code={strategyResult?.code} />
-          )}
-
-          {activeTab === 'wfo' && (
-            <WfoPanel strategyResult={strategyResult} sessionId={strategyResult?.session_id} code={strategyResult?.code} />
-          )}
-
-          {activeTab === 'animate' && (
-            <EquityAnimator strategyResult={strategyResult} />
+          {activeTab === 'optimize' && (
+            <>
+              <SubTabs
+                items={[{ id: 'sensitivity', label: 'SENSITIVITY' }, { id: 'wfo', label: 'WALK-FORWARD' }]}
+                value={subView.optimize} onChange={(v) => setSub('optimize', v)}
+              />
+              {subView.optimize === 'sensitivity' && (
+                <SensitivityPanel strategyResult={strategyResult} sessionId={strategyResult?.session_id} code={strategyResult?.code} />
+              )}
+              {subView.optimize === 'wfo' && (
+                <WfoPanel strategyResult={strategyResult} sessionId={strategyResult?.session_id} code={strategyResult?.code} />
+              )}
+            </>
           )}
 
           {activeTab === 'merge' && (
@@ -560,6 +588,19 @@ export default function App() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function SubTabs({ items, value, onChange }) {
+  return (
+    <div style={S.subTabs}>
+      {items.map(it => (
+        <button key={it.id} onClick={() => onChange(it.id)}
+          style={{ ...S.subTab, ...(value === it.id ? S.subTabActive : {}) }}>
+          {it.label}
+        </button>
+      ))}
     </div>
   )
 }
@@ -580,16 +621,31 @@ const S = {
     padding: '0 12px', height: 38, background: '#0a0a0a',
     borderBottom: '1px solid #1a1d25', flexShrink: 0,
   },
-  tabs: { display: 'flex', gap: 2, height: '100%', alignItems: 'stretch' },
+  tabs: { display: 'flex', gap: 0, height: '100%', alignItems: 'stretch' },
+  tabGroup: { display: 'flex', alignItems: 'center', height: '100%' },
+  groupDivider: { width: 1, height: 18, background: '#1e2230', margin: '0 8px', alignSelf: 'center' },
+  groupLabel: {
+    fontSize: 8, fontWeight: 700, fontFamily: MONO, color: '#5a3a10',
+    letterSpacing: 1, marginRight: 6, alignSelf: 'center', textTransform: 'uppercase',
+  },
   tab: {
     background: 'transparent', border: 'none', borderBottom: '2px solid transparent',
-    color: '#6b7280', padding: '0 12px', fontSize: 10, cursor: 'pointer',
+    color: '#6b7280', padding: '0 10px', fontSize: 10, cursor: 'pointer',
     fontFamily: MONO, fontWeight: 600, letterSpacing: 0.8,
     display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.12s',
   },
-  tabActive: { color: '#e5e7eb', borderBottomColor: '#ff8000' },
-  tabAccent: { borderBottomColor: '#ff8000' },
+  tabActive: { color: '#ffb46b', borderBottomColor: '#ff8000' },
   tabIcon: { fontSize: 12 },
+  subTabs: {
+    display: 'flex', gap: 4, padding: '6px 12px', background: '#0a0a0a',
+    borderBottom: '1px solid #1a1d25',
+  },
+  subTab: {
+    background: '#111318', border: '1px solid #1a1d25', color: '#6b7280',
+    fontFamily: MONO, fontSize: 9.5, fontWeight: 600, letterSpacing: 0.8,
+    padding: '4px 11px', borderRadius: 3, cursor: 'pointer', transition: 'all 0.12s',
+  },
+  subTabActive: { color: '#ffb46b', borderColor: '#ff8000', background: '#1a1205' },
   statusIndicator: { display: 'flex', alignItems: 'center', gap: 8 },
   dot: { width: 6, height: 6, borderRadius: '50%', background: '#22c55e' },
   tickerBadge: {

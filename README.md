@@ -185,7 +185,7 @@ Each signal reports `estimated_execution_cost` for full transparency on spread d
 - **Run History** — All backtest executions are logged with configs, metrics, and duration for auditability.
 
 ### 11. Dynamic UI/UX
-- **Tab-Based Navigation** — 17 dedicated tabs: CHARTS, PROFILE, VOL, BKM, PREMIUM, SIGNALS, DATA, MOMENTS, REVERSION, STRATEGY, LIBRARY, TEARSHEET, COMPARE, SENSITIVITY, WFO, ANIMATE, MERGE.
+- **Function-Grouped Navigation** — tabs grouped by purpose with in-panel sub-toggles: **EQUITY** (Price [Charts/Profile/Stats], Moments, Reversion — the underlying), **OPTIONS** (Surface, BKM, Premium, Signals — the derivatives), **BACKTEST** (Strategy, Results [Tearsheet/Animate/Compare], Optimize [Sensitivity/Walk-Forward], Library), **TOOLS** (Merge). The EQUITY/OPTIONS split makes explicit which views analyze the underlying vs the option chain.
 - **Collapsible Sidebar** — The Controls sidebar is draggable/resizable (200px–450px) and collapses into a micro-icon strip to maximize chart space.
 - **Configuration Hub** — A header gear icon ⚙ opens Settings for tweaking batch variables (requests vs delay), option expirations (near/far boundaries), and sliding window ratios.
 - **Theming** — Fully unified dark-mode styling with natively customized WebKit range sliders (`#3b82f6` accents). Font stack: JetBrains Mono for data, DM Sans for UI.
