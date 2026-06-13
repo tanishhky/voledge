@@ -156,32 +156,36 @@ Yahoo Finance data, **2019-01 → 2024-12**, net of modeled transaction costs.
 
 | Strategy | Return | Ann. | Vol | Sharpe | Max DD |
 |---|---|---|---|---|---|
-| **GARCH vol-managed** (QQQ, 2020–24) | +65.8% | 10.7% | **15.4%** | **0.69** | **−24.2%** |
-| SPY (same window) | +94.6% | 14.3% | 21.0% | 0.68 | −33.7% |
-| **VIX variance-premium harvest** (2019–24) | +32.8% | 5.1% | 15.6% | 0.32 | −29.5% |
+| **GARCH vol-managed SPY** (2020–24) | +75.1% | 11.9% | **13.9%** | **0.85** | **−19.7%** |
+| SPY buy-and-hold (same) | +94.6% | 14.3% | 21.0% | 0.68 | −33.7% |
+| **VIX variance-premium harvest** (2019–24) | −15.4% | −2.9% | 17.8% | −0.16 | −44.0% |
 | SPY (2019–24) | +123.9% | 15.1% | 20.1% | 0.75 | −33.7% |
 
-- **GARCH vol-managed** (`garch_volmanaged`) — a GARCH(1,1) conditional-variance
-  forecast scales single-name exposure to a 15% vol target (Moreira–Muir style).
-  It **hit the target almost exactly (15.4% realized)** and matched SPY's
-  risk-adjusted return (Sharpe 0.69 vs 0.68) with **~28% lower max drawdown**.
-  This is the clean positive result: disciplined vol-targeting works.
-- **VIX variance-premium harvest** (`vix_vrp`) — holds short-vol (SVXY) when the
-  premium `VIX² − realized` is positive, scaling exposure down as VIX rises and
-  stepping fully out in stress (VIX > 30). It harvested the premium at controlled
-  vol with a smaller drawdown than SPY, **but its Sharpe (0.32) trailed
-  buy-and-hold (0.75)**. That is the honest, intended finding: across two major
-  vol spikes (COVID-2020, 2022) the variance premium behaves as *compensation for
-  crash risk*, not free alpha — exactly why the premium exists. Naive always-on
-  short-vol (no stress filter) drew down −57%; the filter/scaling is the
-  difference between harvesting a premium and picking up pennies in front of a
-  steamroller.
+- **GARCH vol-managed** (`garch_volmanaged`) — the clean positive result. A
+  GARCH(1,1) conditional-variance forecast scales SPY exposure to a 15% vol
+  target (Moreira–Muir style), the rest in T-bills. Apples-to-apples vs SPY
+  buy-and-hold it delivered a **higher Sharpe (0.85 vs 0.68, +25%)** at **41%
+  lower max drawdown (−19.7% vs −33.7%)** and a realized 13.9% vol. Disciplined
+  volatility-timing works.
+- **VIX variance-premium harvest** (`vix_vrp`) — the honest reality check. Holds
+  short-vol (SVXY) when `VIX² − realized` is positive, scaling exposure down as
+  VIX rises and stepping out in stress (VIX > 30). Net of realistic transaction
+  costs over 2019–24 it **lost money (−15.4%, Sharpe −0.16, −44% max drawdown)**.
+  This is the intended finding, not a failure to hide: across two major vol
+  spikes (COVID-2020, 2022) the variance premium behaves as *compensation for
+  crash risk*, not harvestable alpha with simple long-only instruments — exactly
+  why the premium exists. The platform *measures* the premium (PREMIUM tab) and
+  then *shows it is dangerous to harvest naively*.
 
-**Engine validation.** The BKM extractor is unit-tested against a Black-Scholes
-chain of known volatility: it recovers the true 20% vol and ~0 skew/kurtosis, and
-converges toward truth as strike coverage widens (residual error is strike
-truncation — the same limitation BKM has on any real, finite option chain). A put-
-skew chain correctly yields negative risk-neutral skew.
+**Engine validation.**
+- *Walk-forward accounting* — a 100%-SPY strategy reproduces SPY buy-and-hold to
+  ±0.000pp at every rebalance frequency (daily → quarterly), confirming the
+  mark-to-market is correct and frequency-independent.
+- *BKM extractor* — unit-tested against a Black-Scholes chain of known
+  volatility: recovers the true 20% vol and ~0 skew/kurtosis and converges toward
+  truth as strike coverage widens (residual error is strike truncation — the same
+  limitation BKM has on any real, finite option chain). A put-skew chain
+  correctly yields negative risk-neutral skew.
 
 ### 5. Trade Signal Generation
 Evaluates real-time math thresholds against the enriched options chain to output actionable strategies. All signals include **transaction cost adjustments** using bid-ask spreads (or a 3% mid-price haircut as fallback):

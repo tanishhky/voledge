@@ -541,7 +541,21 @@ class StrategyRunner:
             if prices_today.isna().any():
                 continue
 
-            # ── Rebalance decision ──
+            # ── 1. Mark existing holdings to today's price FIRST ──
+            # Capturing the period return of whatever we held BEFORE any
+            # rebalance is what makes the engine correct at any rebalance
+            # frequency (incl. daily). The previous code marked AFTER
+            # rebalancing — it reset positions to target at today's price and
+            # then marked them at that same price, silently dropping one period
+            # of P&L per rebalance (so daily rebalancing accrued no return).
+            held_val = sum(
+                positions[t] * prices_today[t]
+                for t in tickers if prices_today[t] > 0
+            )
+            if held_val > 0:
+                capital = held_val
+
+            # ── 2. Rebalance decision (after marking) ──
             current_regime = None
             rebalanced = False
 
@@ -556,7 +570,7 @@ class StrategyRunner:
                 # Call user's regime detection
                 try:
                     current_regime = int(self._detect_fn(training_data, user_config))
-                except Exception as e:
+                except Exception:
                     current_regime = 0  # fallback
 
                 # Get allocations
@@ -569,21 +583,28 @@ class StrategyRunner:
                     if t not in new_weights:
                         new_weights[t] = 0.0
 
+                # Actual (drifted) weights implied by current holdings. We trade
+                # FROM these to the new targets, so turnover/cost reflect real
+                # rebalancing (incl. drift correction), not just a change in the
+                # target vector.
+                actual_w = {}
+                for t in tickers:
+                    price = prices_today.get(t)
+                    actual_w[t] = (positions[t] * price / capital) if (capital > 0 and price and price > 0) else 0.0
+
                 # Compute turnover cost
                 cost = 0.0
                 model = getattr(cfg, 'txn_model', None)
                 for t in tickers:
-                    old_w = weights_current.get(t, 0.0)
-                    new_w = new_weights.get(t, 0.0)
-                    delta_w = new_w - old_w
+                    delta_w = new_weights.get(t, 0.0) - actual_w.get(t, 0.0)
                     if abs(delta_w) < 1e-6: continue
-                    
+
                     price = prices_today.get(t)
                     if price is None or price <= 0: continue
-                    
+
                     dollar_amount = abs(delta_w) * capital
                     shares = dollar_amount / price
-                    
+
                     if model:
                         bid_ask = dollar_amount * (model.spread_bps / 10000.0)
                         impact = dollar_amount * (model.market_impact_bps / 10000.0)
@@ -596,18 +617,13 @@ class StrategyRunner:
                         trade_cost = dollar_amount * cfg.transaction_cost
                     cost += trade_cost
 
-                old_w = np.array([weights_current.get(t, 0) for t in tickers])
-                new_w = np.array([new_weights.get(t, 0) for t in tickers])
-                turnover = float(np.abs(new_w - old_w).sum())
+                turnover = float(sum(abs(new_weights.get(t, 0) - actual_w.get(t, 0)) for t in tickers))
                 capital -= cost
 
-                # Update positions (shares)
+                # Re-deploy to target weights at today's prices
                 for t in tickers:
                     price = prices_today[t]
-                    if price > 0:
-                        positions[t] = (new_weights[t] * capital) / price
-                    else:
-                        positions[t] = 0.0
+                    positions[t] = (new_weights[t] * capital) / price if price > 0 else 0.0
 
                 weights_current = new_weights.copy()
                 last_rebal_idx = i
@@ -626,14 +642,6 @@ class StrategyRunner:
                     'date': date.isoformat(),
                     'regime': current_regime,
                 })
-
-            # ── Mark-to-market ──
-            portfolio_val = sum(
-                positions[t] * prices_today[t]
-                for t in tickers if prices_today[t] > 0
-            )
-            if portfolio_val > 0:
-                capital = portfolio_val
 
             # Benchmark value
             bench_val = None
@@ -1178,7 +1186,7 @@ STRATEGY_TEMPLATES = {
                        'conditional-variance forecast scales exposure to a constant '
                        'vol target (rest in BIL). Forecast premium, not option-implied.',
         'code': GARCH_VOLMANAGED_TEMPLATE_CODE,
-        'default_tickers': ['QQQ', 'BIL'],
+        'default_tickers': ['SPY', 'BIL'],
         'default_config': {'rebalance_days': 21, 'min_training_days': 252, 'window_type': 'expanding'},
     },
     'hmm_regime': {
