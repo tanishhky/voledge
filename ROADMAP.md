@@ -139,14 +139,39 @@ into two resume bullets that connect into one story:
   (REVERSION tab), wired into `App.jsx` + `api.js`.
 - README reframed to lead with the thesis; PREMIUM + REVERSION documented.
 
+### Shipped (validated, real numbers)
+- **Premium-driven backtests** wired into the walk-forward engine as
+  one-click templates and run on real Yahoo data, net of costs:
+  - `garch_volmanaged` (SPY/BIL, 2020–24): **Sharpe 0.85 vs SPY 0.68,
+    maxDD −19.7% vs −33.7%, 13.9% vol** — vol-timing beats buy-and-hold.
+  - `vix_vrp` (2019–24): **−15.4%, Sharpe −0.16, −44% DD** — naive
+    short-vol harvest loses; the premium is crash-risk compensation.
+- **BKM bug fixed + validated**: removed spurious 1/T and double e^{rT};
+  recovers true BS vol/skew/kurt, converges with strike coverage.
+- **Walk-forward engine bug fixed**: mark-to-market now precedes
+  rebalance; 100%-SPY reproduces buy-and-hold to ±0.000pp at any
+  frequency. (Earlier "good" VRP number was a bug artifact.)
+- **Bloomberg UI**: emoji-free, orange-on-black, grouped/consolidated
+  tabs, non-blocking Vol Analysis.
+- Docs: `docs/INTERVIEW_PREP.md` (question bank), `docs/DEMO_SCRIPT.md`.
+
+### Resume bullet (honest, use as-is)
+> **VolEdge** — full-stack options-volatility research platform
+> (FastAPI/React, ~6k LOC). Implemented BKM (2003) model-free
+> risk-neutral moment extraction (unit-validated vs Black-Scholes
+> chains) and a physical-vs-risk-neutral premium monitor; built a
+> no-look-ahead walk-forward backtester with an AST-sandboxed strategy
+> DSL. A GARCH(1,1) vol-targeted strategy beat SPY risk-adjusted
+> (Sharpe 0.85 vs 0.68) at 41% lower max drawdown (2020–24).
+
 ### Still open (next sessions)
-- **Roadmap B proper:** run ONE clean backtest of a premium-driven
-  strategy (e.g. sell variance when the 30d variance premium is rich)
-  under no-lookahead discipline → headline number for the paper/resume.
-- Polished 90-sec demo for Alex Shirokov (PREMIUM tab + one backtest
-  tearsheet vs SPY). Still overdue.
-- Turn `paper/paper_voledge.tex` into the technical note (now with a
-  real finding, not just engineering).
+- **Record the 90-sec demo** (script in `docs/DEMO_SCRIPT.md`) — owed to
+  Alex Shirokov; the weakest recruiter-facing gap.
+- Turn `paper/paper_voledge.tex` into the technical note using the
+  validated BKM + the two backtest results.
+- (Needs a Polygon options key) validate BKM on a real live chain to
+  close the "only tested synthetically on real options" gap; clean the
+  legacy "High Volume Node" language in the SIGNALS list.
 
 ## Related context
 
