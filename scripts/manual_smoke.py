@@ -2,11 +2,14 @@ import requests
 import json
 import time
 
-keys = [
-    "C_FEcnCjRa_eYvSJ_6wNSxeq_DNcPHtD",
-    "6eu_W12Gpo50WYtc1PAEQM3I1giAVSzE",
-    "9z4Ha1X1KEuRnhxCF2OopYG7ToW3R4C9"
-]
+# Manual smoke script (NOT a pytest test): exercises a locally running
+# backend end to end. Polygon keys come from the environment; never commit
+# keys to the repo.
+import os
+
+keys = [k.strip() for k in os.getenv("POLYGON_API_KEYS", "").split(",") if k.strip()]
+if not keys:
+    raise SystemExit("set POLYGON_API_KEYS=key1,key2 to run this script")
 
 print("1) Fetching candles...")
 c_payload = {
