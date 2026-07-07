@@ -3,6 +3,8 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{setspace}
 \usepackage{float}
@@ -117,6 +119,18 @@ put-skew chain correctly yields negative risk-neutral skew. On live SPY chains
 (e.g.\ 30d skew $\approx -2.2$, kurtosis $\approx 9$; 60d $\approx -1.6$, $3.4$),
 consistent with published equity-index estimates.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.62\textwidth]{fig/bkm_validation.png}
+\caption{BKM extractor versus closed-form truth. On a Black-Scholes chain of
+known 20\% volatility, the recovered risk-neutral volatility converges to the
+pricing volatility as strike coverage widens; the small residual at narrow
+wings is strike truncation, inherent to BKM on any finite chain. This is the
+regression test that guards the engine (an earlier version carried a spurious
+$1/T$ and doubled $e^{rT}$, inflating moments $\sim$2.7x).}
+\label{fig:bkm}
+\end{figure}
+
 \paragraph{Engine.} A 100\%-SPY strategy reproduces SPY buy-and-hold to
 $\pm 0.000$ percentage points at rebalance frequencies of 1, 5, 21, and 63 days,
 confirming the mark-to-market is correct and frequency-independent.
@@ -150,6 +164,17 @@ forecastable while expected returns are not, scaling down in high-forecast-vol
 states improves the realized risk/return trade-off - and the variance premium
 makes those states expensive to be long, so the de-risking is compensated.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fig/garch_volmanaged.png}
+\caption{GARCH vol-managed SPY versus buy-and-hold, walk-forward with a 2019
+training burn-in so the evaluation window (2020-2024) includes the COVID
+crash. The strategy gives up total return for a markedly better path: Sharpe
+0.86 versus 0.68, maximum drawdown $-19.7\%$ versus $-33.7\%$. Reproduce with
+\texttt{scripts/make\_paper\_figures.py}.}
+\label{fig:garch}
+\end{figure}
+
 \paragraph{Variance-premium harvest (the reality check).}
 A long-only short-volatility harvester (short via SVXY when $\text{VIX}^2-$realized
 is positive, scaling down as VIX rises and stepping out above VIX 30) \emph{lost}
@@ -158,6 +183,16 @@ failure: across the COVID-2020 and 2022 volatility spikes the premium behaves as
 compensation for crash risk, not harvestable alpha with simple long-only
 instruments - which is precisely why the premium exists. The platform thus both
 measures the premium and demonstrates that harvesting it naively is dangerous.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fig/vix_vrp.png}
+\caption{The reality check: the naive variance-premium harvest versus SPY,
+walk-forward, net of costs (2019-2024). The COVID-2020 and 2022 volatility
+spikes are exactly where the short-vol position pays out its accumulated
+premium as crash losses.}
+\label{fig:vrp}
+\end{figure}
 
 \section{Limitations}
 Yahoo Finance quotes are $\sim$15-minute-delayed snapshots with no SLA; deep-OTM
