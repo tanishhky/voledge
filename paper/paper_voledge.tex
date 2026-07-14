@@ -5,20 +5,31 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{setspace}
+\usepackage{caption}
 \usepackage{float}
 \usepackage{enumitem}
-\onehalfspacing
+\usepackage{natbib}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
 
-\hypersetup{colorlinks=true,linkcolor=blue!70!black,citecolor=blue!70!black,urlcolor=blue!70!black}
+\definecolor{accent}{HTML}{B07D1F}
+\titleformat{\section}{\large\bfseries\color{accent}}{\thesection}{0.6em}{}
+\captionsetup{font=small, labelfont=bf}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\itshape VolEdge}
+\fancyhead[R]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
 
 \title{\textbf{VolEdge: Measuring and Trading the\\Variance Risk Premium with Model-Free\\Risk-Neutral Moments}}
 \author{Tanishk Yadav\\[2pt]\textit{MS Financial Engineering}\\NYU Tandon School of Engineering\\New York, NY, USA}
-\date{Technical note - working draft}
+\date{July 2026}
 
 \begin{document}
 \maketitle
+\thispagestyle{fancy}
 
 \begin{abstract}
 \noindent
@@ -209,7 +220,5 @@ premium: model-free risk-neutral moments versus horizon-matched realized moments
 validated extractors, and a frequency-correct walk-forward engine. The empirical
 takeaway is that the premium is easy to measure and hard to keep - disciplined
 volatility targeting is compensated, while naive premium harvesting is not.
-
-\paragraph{Code.} \url{https://github.com/tanishhky/voledge}
 
 \end{document}

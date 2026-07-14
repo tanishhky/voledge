@@ -341,3 +341,9 @@ POST  /strategy/wfo                    → Walk-forward optimization
 - **BKM Requirements**: Model-free risk-neutral moments require ≥3 OTM calls and ≥3 OTM puts within the target DTE bucket. Broader strike ranges or deeper chains improve accuracy.
 - **IV Accuracy**: Black-Scholes inherently prices European options. For American equity options, there is a minor early-exercise discrepancy, but BS serves as the standard approximation.
 - **Signal Disclaimer**: Generated signals are mathematical indicators derived purely from statistical anomalies (VRP, Skew, KDE multimodality). They are **not** investment advice.
+
+## Working Paper
+
+A short technical write-up of the Q-P thesis and validated results (`paper/paper_voledge.pdf`) is
+submitted to SSRN, currently under editorial review:
+[Abstract ID 7113098](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7113098).
