@@ -84,6 +84,9 @@ price-distribution-tool/
 
 ### Demonstrations
 
+- **Full Walkthrough (live data):** Price + GMM fit → IV surface → BKM risk-neutral vs physical moments → generated trade signals → the Strategy Lab, run end to end on a live SPY chain.
+![VolEdge Full Walkthrough](assets/voledge-demo-walkthrough.gif)
+
 Check out the interactive backtesting and analysis features:
 
 - **BKM Moments & Volatility Analysis:** Fetch options chains, compute risk-neutral moments via BKM, and generate trading signals.
