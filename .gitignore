@@ -39,3 +39,8 @@ demo_data/
 # Personal prep materials — keep local, do not publish
 docs/INTERVIEW_PREP.md
 docs/DEMO_SCRIPT.md
+
+paper/*.aux
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.out
