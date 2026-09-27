@@ -347,6 +347,5 @@ POST  /strategy/wfo                    → Walk-forward optimization
 
 ## Working Paper
 
-A short technical write-up of the Q-P thesis and validated results (`paper/paper_voledge.pdf`) is
-submitted to SSRN, currently under editorial review:
-[Abstract ID 7113098](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7113098).
+A short technical write-up of the Q-P thesis and validated results is in the repository as a
+working paper (`paper/paper_voledge.pdf`; not peer reviewed).
