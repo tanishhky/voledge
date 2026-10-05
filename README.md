@@ -2,6 +2,8 @@
 
 ![tests](https://github.com/tanishhky/voledge/actions/workflows/tests.yml/badge.svg)
 
+**Paper, figures and summary:** [tanishkyadav.me/research/voledge](https://www.tanishkyadav.me/research/voledge)
+
 **The thesis in one line:** the gap between what options *price* (the risk-neutral
 distribution, extracted model-free via BKM) and what the underlying *realizes*
 (the physical distribution, horizon-matched) **is the risk premium** — and that
